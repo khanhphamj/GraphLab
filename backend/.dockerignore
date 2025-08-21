@@ -1,0 +1,17 @@
+# Ignore all files in the __pycache__ directory
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.env
+.git
+.gitignore
+.DS_Store
+.vscode/
+.idea/
+tests/
+test/
+README.md
+*.log

@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    container_name: graphlap-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEO4J_URI=${NEO4J_URI}
+    depends_on:
+      - postgres
+      - neo4j
+
+  postgres:
+    image: postgres:15
+    container_name: graphlap-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:5.18.0
+    container_name: graphlap-neo4j
+    restart: always
+    ports:
+      - "7687:7687"
+    env_file:
+      - .env
+    environment:
+      - NEO4J_AUTH=${NEO4J_AUTH}
+    volumes:
+      - neo4j-data:/data
+
+volumes:
+  postgres-data:
+  neo4j-data:
