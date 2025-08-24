@@ -42,17 +42,6 @@ backend/
   requirements.txt
 ```
 
-### Environment Variables (ENV)
-Create a `.env` at the project root (loaded by docker-compose and pydantic-settings):
-```env
-# PostgreSQL
-DATABASE_URL=postgresql://postgres:graphlap@postgres:5432/graphlap
-
-# Neo4j (used by the app, do not set in the neo4j container)
-NEO4J_URI=bolt://neo4j:7687
-NEO4J_AUTH=neo4j/graphlap
-```
-
 Rationale: never hardcode secrets/URLs; switch environments easily (dev/staging/prod).
 
 ### Run with Docker Compose
@@ -63,7 +52,6 @@ docker-compose up --build
 Quick checks:
 - API docs: `http://localhost:8000/docs`
 - Health: `http://localhost:8000/health`
-- Neo4j Browser: `http://localhost:7474` (user: `neo4j`, pass: `graphlap`)
 
 Stop the stack:
 ```bash
