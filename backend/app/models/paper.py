@@ -8,25 +8,25 @@ from app.db.base import Base
 class Paper(Base):
     __tablename__ = "papers"
     __table_args__ = (
-        UniqueConstraint("labId", "id", name="uq_papers_lab_arxiv"),
-        Index("ix_papers_lab", "labId"),
-        Index("ix_papers_published_at", "paperPublishedAt"),
+        UniqueConstraint("lab_id", "id", name="uq_papers_lab_arxiv"),
+        Index("ix_papers_lab", "lab_id"),
+        Index("ix_papers_published_at", "paper_published_at"),
     )
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     abstract: Mapped[Optional[str]] = mapped_column(Text, nullable=False)
-    paperPublishedAt: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=False)
-    paperUpdatedAt: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=False)
-    entryId: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
-    pdfUrl: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
-    primaryCategory: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
+    paper_published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=False)
+    paper_updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=False)
+    entry_id: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
+    pdf_url: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
+    primary_category: Mapped[Optional[str]] = mapped_column(String(1000), nullable=False)
     categories: Mapped[Optional[str]] = mapped_column(String(1000))
     doi: Mapped[Optional[str]] = mapped_column(String(1000))
     comment: Mapped[Optional[str]] = mapped_column(Text)
     journalRef: Mapped[Optional[str]] = mapped_column(Text)
     license: Mapped[Optional[str]] = mapped_column(Text)
     
-    labId: Mapped[int] = mapped_column(ForeignKey("labs.id", ondelete="CASCADE"), index=True, nullable=False)
+    lab_id: Mapped[int] = mapped_column(ForeignKey("labs.id", ondelete="CASCADE"), index=True, nullable=False)
 
     # relationshipss
     lab: Mapped["Lab"] = relationship("Lab", back_populates="papers")
