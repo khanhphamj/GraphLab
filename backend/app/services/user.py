@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate, UserRead
+from app.schemas.user import UserCreate, UserUpdate, UserResponse
 import uuid
 from typing import Optional
 from app.utils.hash import get_password_hash, verify_password
@@ -31,11 +31,11 @@ class EmailAlreadyExistsError(UserServiceError):
         
 
 class UserNotFoundError(UserServiceError):
-    def __init__(self, user_id: int):
+    def __init__(self, identifier):
         super().__init__(
-            f"User with id {user_id} not found",
+            f"User with identifier {identifier} not found",
             error_code="USER_NOT_FOUND",
-            details={"user_id": user_id}
+            details={"identifier": identifier}
             )
 
 
@@ -69,78 +69,91 @@ def _active_by_id(db: Session, user_id: uuid.UUID) -> Optional[User]:
         User.deleted_at == None
         ).first()
 
-def _active_by_name(db: Session, name: str) -> Optional[User]:
+def _active_by_name(db: Session, user_name: str) -> Optional[User]:
     return db.query(User).filter(
-        User.name == name,
+        User.name == user_name,
         User.deleted_at == None
         ).first()
 
-
 #Service functions
-def create_user(db: Session, user_in: UserCreate) -> User:
-    #Validate email
-    validate_email(user_in.email)
+def create_user(db: Session, user_in: UserCreate) -> UserResponse:
+    try:
+        #Validate email
+        validate_email(user_in.email)
+        if _active_by_email(db, user_in.email):
+            logger.warning(f"Email {user_in.email} already exists")
+            raise EmailAlreadyExistsError(user_in.email)
+        #Validate password
+        validate_password(user_in.password)
+        db_user = User(
+            name=user_in.name,
+            email=user_in.email,
+            hashed_password=get_password_hash(user_in.password),
+            )
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+        logger.info(f"User {db_user.id}, email {db_user.email} created successfully")
+        return UserResponse.model_validate(db_user)
+    except Exception as e:
+        logger.error(f"Error creating user: {e}")
+        db.rollback()
+        raise
 
-    #Check if user already exists
-    if _active_by_email(db, user_in.email):
-        raise EmailAlreadyExistsError(user_in.email)
-    
-    #Validate password
-    validate_password(user_in.password)
-
-    #Create user
-    db_user = User(
-        name=user_in.name,
-        email=user_in.email,
-        hashed_password=get_password_hash(user_in.password),
-        )
-    
-    #Add user to database
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-
-    return db_user
-
-def get_user(db: Session, user_id: uuid.UUID = None, email: str = None, name: str = None) -> User:
+def get_user(db: Session, user_id: uuid.UUID = None, email: str = None, name: str = None) -> UserResponse:
     if user_id is not None:
         user = _active_by_id(db, user_id)
     elif email is not None:
         user = _active_by_email(db, email)
     elif name is not None:
-        user = db.query(User).filter(
-            User.name == name,
-            User.deleted_at == None
-        ).first()
+        user = _active_by_name(db, name)
     else:
+        logger.warning("No identifier provided")
         raise ValueError("At least one identifier (user_id, email, name) must be provided")
-    
     if not user:
-        raise UserNotFoundError(user_id or email or name)
-    return user
+        identifier = user_id or email or name
+        logger.warning(f"User not found with identifier {identifier}")
+        raise UserNotFoundError(identifier)
+    return UserResponse.model_validate(user)
 
-def update_user(db: Session, user_id: uuid.UUID, user_in: UserUpdate) -> User:
+def update_user(db: Session, user_id: uuid.UUID, user_in: UserUpdate) -> UserResponse:
     user = _active_by_id(db, user_id)
     if not user:
-        raise UserNotFoundError(user_id)
-    
+        logger.warning(f"User {user_id} not found")
+        raise UserNotFoundError(user_id)    
     if user_in.name:
         user.name = user_in.name
+    #Validate email
     if user_in.email:
+        validate_email(user_in.email)
+        existing_user = _active_by_email(db, user_in.email)
+        if existing_user and existing_user.id != user_id:
+            raise EmailAlreadyExistsError(user_in.email)
         user.email = user_in.email
+    #Validate password
     if user_in.password:
+        validate_password(user_in.password)
         user.hashed_password = get_password_hash(user_in.password)
-    
-    #Update user
-    db.commit()
-    db.refresh(user)
-
-    return user
+    try:
+        db.commit()
+        db.refresh(user)
+        logger.info(f"User {user_id} updated successfully")
+        return UserResponse.model_validate(user)
+    except Exception as e:
+        logger.error(f"Error updating user: {e}")
+        db.rollback()
+        raise
 
 def delete_user(db: Session, user_id: uuid.UUID) -> None:
     user = _active_by_id(db, user_id)
     if not user:
+        logger.warning(f"User {user_id} not found")
         raise UserNotFoundError(user_id)
-    
     user.deleted_at = datetime.now(timezone.utc)
-    db.commit()
+    try:
+        db.commit()
+        logger.info(f"User {user_id} deleted successfully")
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
+        db.rollback()
+        raise
