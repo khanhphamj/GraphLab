@@ -9,7 +9,7 @@ class UserBase(BaseModel):
 
 # Schemas create user
 class UserCreate(UserBase):
-    password: constr(min_length=6)
+    password: constr(min_length=8)
 
 # Schemas update user
 class UserUpdate(BaseModel):

@@ -5,11 +5,10 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 import uuid
 from typing import Optional
-from app.utils.hash import get_password_hash, verify_password
+from app.core.security import get_password_hash
 from datetime import datetime, timezone
 from app.core.validators import validate_email, validate_password
 import logging
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +19,6 @@ class UserServiceError(Exception):
         self.details = details
         self.timestamp = datetime.now(timezone.utc)
 
-
 class EmailAlreadyExistsError(UserServiceError):
     def __init__(self, email: str):
         super().__init__(
@@ -29,7 +27,6 @@ class EmailAlreadyExistsError(UserServiceError):
             details={"email": email}
             )
         
-
 class UserNotFoundError(UserServiceError):
     def __init__(self, identifier):
         super().__init__(
@@ -38,7 +35,6 @@ class UserNotFoundError(UserServiceError):
             details={"identifier": identifier}
             )
 
-
 class InvalidEmailError(UserServiceError):
     def __init__(self, email: str):
         super().__init__(
@@ -46,15 +42,13 @@ class InvalidEmailError(UserServiceError):
             error_code="INVALID_EMAIL",
             details={"email": email}
             )
-        
-        
+                
 class InvalidPasswordError(UserServiceError):
     def __init__(self, password: str):
         super().__init__(
             f"Invalid password",
             error_code="INVALID_PASSWORD"
             )
-
 
 # Helper functions
 def _active_by_email(db: Session, email: str) -> Optional[User]:
@@ -111,10 +105,22 @@ def get_user(db: Session, user_id: uuid.UUID = None, email: str = None, name: st
         logger.warning("No identifier provided")
         raise ValueError("At least one identifier (user_id, email, name) must be provided")
     if not user:
-        identifier = user_id or email or name
+        identifier = str(user_id) if user_id else (email or name)
         logger.warning(f"User not found with identifier {identifier}")
         raise UserNotFoundError(identifier)
     return UserResponse.model_validate(user)
+
+def get_user_model(db: Session, user_id: uuid.UUID = None, email: str = None, name: str = None) -> User:
+    if user_id is not None:
+        return _active_by_id(db, user_id)
+    elif email is not None:
+        return _active_by_email(db, email)
+    elif name is not None:
+        return _active_by_name(db, name)
+    else:
+        logger.warning("No identifier provided")
+        raise ValueError("At least one identifier (user_id, email, name) must be provided")
+    return user
 
 def update_user(db: Session, user_id: uuid.UUID, user_in: UserUpdate) -> UserResponse:
     user = _active_by_id(db, user_id)

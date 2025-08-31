@@ -1,4 +1,4 @@
 from .user import User
 from .lab import Lab
 from .paper import Paper
-from .paperauthours import PaperAuthor
+from .paperauthors import PaperAuthor

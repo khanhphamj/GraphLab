@@ -1,20 +1,40 @@
-from fastapi import FastAPI, HTTPException, status
-from fastapi.responses import JSONResponse
-from sqlalchemy import text
-from app.db.session import SessionLocal
-from app.routers import user
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.routers import auth, user
 
-app = FastAPI(title="GraphLap API", description="API for GraphLap", version="1.0.0")
+app = FastAPI(
+    title="GraphLab API",
+    description="Authentication & User Management API",
+    version="1.0.0"
+)
 
-app.include_router(user.router, prefix="/users", tags=["users"])
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # Frontend development
+        "http://localhost:8080",  # Alternative frontend port
+        "https://yourdomain.com", # Production domain
+    ],
+    allow_credentials=True,      # Cho phép gửi cookies/authorization
+    allow_methods=["*"],         # Cho phép tất cả HTTP methods
+    allow_headers=["*"],         # Cho phép tất cả headers
+)
 
+# Include routers
+app.include_router(auth.router, prefix="/api/v1")  # /api/v1/auth/*
+app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
+
+# Health check
 @app.get("/health")
 def health_check():
-    try:
-        with SessionLocal() as db:
-            db.execute(text("SELECT 1"))
-            return JSONResponse(content={f"Health check passed"}, status_code=status.HTTP_200_OK)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                            detail=f"Internal server error: {str(e)}")
+    return {"status": "healthy", "service": "GraphLab API"}
 
+# Root endpoint
+@app.get("/")
+def root():
+    return {
+        "message": "Welcome to GraphLab API",
+        "docs": "/docs",
+        "version": "1.0.0"
+    }
