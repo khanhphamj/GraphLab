@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, user
+from app.routers import auth, user, lab
 
 app = FastAPI(
     title="GraphLab API",
-    description="Authentication & User Management API",
+    description="API for GraphLab platform",
     version="1.0.0"
 )
 
@@ -16,14 +16,15 @@ app.add_middleware(
         "http://localhost:8080",  # Alternative frontend port
         "https://yourdomain.com", # Production domain
     ],
-    allow_credentials=True,      # Cho phép gửi cookies/authorization
-    allow_methods=["*"],         # Cho phép tất cả HTTP methods
-    allow_headers=["*"],         # Cho phép tất cả headers
+    allow_credentials=True,      
+    allow_methods=["*"],         # Allow all HTTP methods
+    allow_headers=["*"],         # Allow all headers
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api/v1")  # /api/v1/auth/*
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])  # Add /auth prefix
 app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
+app.include_router(lab.router, prefix="/api/v1/labs", tags=["labs"])  # Add lab router
 
 # Health check
 @app.get("/health")
@@ -36,5 +37,10 @@ def root():
     return {
         "message": "Welcome to GraphLab API",
         "docs": "/docs",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "endpoints": {
+            "auth": "/api/v1/auth",
+            "users": "/api/v1/users", 
+            "labs": "/api/v1/labs"
+        }
     }
