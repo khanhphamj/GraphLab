@@ -1,3 +1,6 @@
+import re
+from typing import Optional
+
 def name_to_slug(name: str) -> str:
     """
     Convert a human-readable name to URL-friendly slug.

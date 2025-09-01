@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+import uuid
 
 from app.schemas.user import UserResponse
 

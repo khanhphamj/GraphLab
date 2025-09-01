@@ -22,9 +22,9 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])  # Add /auth prefix
-app.include_router(user.router, prefix="/api/v1/users", tags=["users"])
-app.include_router(lab.router, prefix="/api/v1/labs", tags=["labs"])  # Add lab router
+app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(user, prefix="/api/v1/users", tags=["users"])
+app.include_router(lab, prefix="/api/v1/labs", tags=["labs"])
 
 # Health check
 @app.get("/health")
