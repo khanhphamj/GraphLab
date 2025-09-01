@@ -8,7 +8,7 @@ from app.db.base import Base
 class Paper(Base):
     __tablename__ = "papers"
     __table_args__ = (
-        UniqueConstraint("lab_id", "id", name="uq_papers_lab_arxiv"),
+        UniqueConstraint("lab_id", "entry_id", name="uq_papers_lab_entry_id"),
         Index("ix_papers_lab", "lab_id"),
         Index("ix_papers_published_at", "paper_published_at"),
     )
