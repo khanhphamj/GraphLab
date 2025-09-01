@@ -7,7 +7,7 @@ import uuid
 from typing import Optional
 from app.core.security import get_password_hash
 from datetime import datetime, timezone
-from app.core.validators import validate_email, validate_password
+from app.core.validators import validate_email, validate_password, validate_name
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,15 @@ class EmailAlreadyExistsError(UserServiceError):
             error_code="EMAIL_ALREADY_EXISTS",
             details={"email": email}
             )
-        
+
+class NameAlreadyExistsError(UserServiceError):
+    def __init__(self, name: str):
+        super().__init__(
+            f"Name {name} already exists",
+            error_code="NAME_ALREADY_EXISTS",
+            details={"name": name}
+            )
+            
 class UserNotFoundError(UserServiceError):
     def __init__(self, identifier):
         super().__init__(
@@ -54,27 +62,30 @@ class InvalidPasswordError(UserServiceError):
 def _active_by_email(db: Session, email: str) -> Optional[User]:
     return db.query(User).filter(
         User.email == email,
-        User.deleted_at == None
+        User.deleted_at.is_(None)
         ).first()
     
 def _active_by_id(db: Session, user_id: uuid.UUID) -> Optional[User]:
     return db.query(User).filter(
         User.id == user_id,
-        User.deleted_at == None
+        User.deleted_at.is_(None)
         ).first()
 
 def _active_by_name(db: Session, user_name: str) -> Optional[User]:
     return db.query(User).filter(
         User.name == user_name,
-        User.deleted_at == None
+        User.deleted_at.is_(None)
         ).first()
 
 #Service functions
 def create_user(db: Session, user_in: UserCreate) -> UserResponse:
     try:
+        #Validate name
+        validate_name(user_in.name)
         #Validate email
         validate_email(user_in.email)
-        if _active_by_email(db, user_in.email):
+        existing_user = _active_by_email(db, user_in.email)
+        if existing_user:
             logger.warning(f"Email {user_in.email} already exists")
             raise EmailAlreadyExistsError(user_in.email)
         #Validate password
@@ -128,6 +139,10 @@ def update_user(db: Session, user_id: uuid.UUID, user_in: UserUpdate) -> UserRes
         logger.warning(f"User {user_id} not found")
         raise UserNotFoundError(user_id)    
     if user_in.name:
+        validate_name(user_in.name)
+        existing_user = _active_by_name(db, user_in.name)
+        if existing_user and existing_user.id != user_id:
+            raise NameAlreadyExistsError(user_in.name)
         user.name = user_in.name
     #Validate email
     if user_in.email:

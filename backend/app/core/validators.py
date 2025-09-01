@@ -19,3 +19,14 @@ def validate_password(password: str) -> None:
         raise ValueError("Password must contain at least one lowercase letter")
     if not re.search(r'\d', password):
         raise ValueError("Password must contain at least one digit")
+
+def validate_name(name: str) -> None:
+    if len(name) < 1 or len(name) > 64:
+        raise ValueError("Name must be at least 1 character long and less than 64 characters")
+
+def validate_description(description: str) -> None:
+    if len(description) == 0 or len(description) > 255:
+        raise ValueError("Description must be less than 255 characters")
+
+
+    
