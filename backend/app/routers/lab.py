@@ -133,60 +133,17 @@ def update_lab_route(
             ).first()
             if existing_lab:
                 raise LabNameAlreadyExistsError(lab_in.name, current_user.id)
-        
-        # Update lab
-        if lab_in.name:
-            lab.name = lab_in.name
-        if lab_in.description is not None:
-            lab.description = lab_in.description
-            
         try:
-            db.commit()
-            db.refresh(lab)
-            return LabResponse.model_validate(lab)
-            
+            return update_lab(db, lab.id, lab_in)
         except Exception as e:
-            db.rollback()
-            raise
-            
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Internal server error: {str(e)}")
     except LabNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Lab with slug '{lab_slug}' not found"
-        )
-    except LabNameAlreadyExistsError as e:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, 
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        detail=str(e))
 
 @router.delete("/{lab_slug}", status_code=status.HTTP_200_OK)
-def delete_lab_route(
-    lab_slug: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Delete lab by slug - AUTHENTICATED.
-    
-    Users can only delete their own labs.
-    
-    Args:
-        lab_slug: Slug of lab to delete
-        
-    Returns:
-        Success message
-        
-    Raises:
-        400: Invalid slug format
-        404: Lab not found
-        500: Internal server error
-    """
+def delete_lab_route(lab_slug: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
         # Validate slug format
         if not is_valid_slug(lab_slug):
@@ -194,10 +151,8 @@ def delete_lab_route(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid lab slug format. Use lowercase letters, numbers, and hyphens only."
             )
-        
         # Convert slug to readable name
         lab_name = slug_to_name(lab_slug)
-        
         # Find lab by name for current user
         lab = db.query(Lab).filter(
             and_(
@@ -209,26 +164,16 @@ def delete_lab_route(
                 )
             )
         ).first()
-        
         if not lab:
             raise LabNotFoundError(lab_slug, current_user.id)
-        
         try:
-            db.delete(lab)
-            db.commit()
-            return {"message": f"Lab '{lab_slug}' deleted successfully"}
-            
+            return delete_lab(db, lab.id)
         except Exception as e:
-            db.rollback()
-            raise
-            
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+            detail=f"Internal server error: {str(e)}")
     except LabNotFoundError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Lab with slug '{lab_slug}' not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+        detail=str(e))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
-            detail=f"Internal server error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+        detail=f"Internal server error: {str(e)}")

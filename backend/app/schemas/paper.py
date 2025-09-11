@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+from datetime import datetime
 import uuid
+from app.schemas.lab import LabResponse
 
 class PaperBase(BaseModel):
     id: int
@@ -17,6 +19,9 @@ class PaperBase(BaseModel):
     journalRef: Optional[str] = None
     license: Optional[str] = None
     lab_id: int
+
+class PaperCreate(PaperBase):
+    pass
 
 class PaperUpdate(BaseModel):
     title: Optional[str] = None

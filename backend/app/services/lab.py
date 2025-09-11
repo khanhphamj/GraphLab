@@ -8,6 +8,7 @@ from typing import Optional
 from datetime import datetime, timezone
 import logging
 import uuid
+from app.utils.slug import slug_to_name
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,17 @@ def _active_by_name_owner_id(db: Session, name: str, owner_id: uuid.UUID = None)
         Lab.deleted_at.is_(None),
         Lab.owner_id == owner_id if owner_id else True
         ).first()
+
+def get_user_lab(db: Session, lab_slug: str, user_id: uuid.UUID) -> Lab:
+    lab_name = slug_to_name(lab_slug)
+    lab = db.query(Lab).filter(
+        Lab.name == lab_name,
+        Lab.owner_id == user_id,
+        Lab.deleted_at.is_(None)
+    ).first()
+    if not lab:
+        raise LabNotFoundError(lab_name, user_id)
+    return lab
 
 #Service functions
 def create_lab(db: Session, lab_in: LabCreate) -> LabResponse:
