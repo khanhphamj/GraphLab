@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, Text, ForeignKey, DateTime, Numeric, Boolean, Enum, UniqueConstraint, func
+from sqlalchemy import String, Text, ForeignKey, DateTime, Numeric, Boolean, Enum, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -10,7 +10,7 @@ from app.db.base import Base
 class ResearchKeyword(Base):
     __tablename__ = "research_keywords"
     __table_args__ = (
-        UniqueConstraint("session_id", func.lower("term"), name="uq_research_keywords_session_term"),
+        Index("uq_research_keywords_session_term", "session_id", func.lower("term"), unique=True),
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("brainstorm_sessions.id", ondelete="CASCADE"), nullable=False)

@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, user, lab, paper
 
 app = FastAPI(
     title="GraphLab API",
@@ -21,13 +20,6 @@ app.add_middleware(
     allow_headers=["*"],         # Allow all headers
 )
 
-# Include routers
-app.include_router(auth, prefix="/api/v1/auth", tags=["authentication"])
-app.include_router(user, prefix="/api/v1/users", tags=["users"])
-app.include_router(lab, prefix="/api/v1/labs", tags=["labs"])
-app.include_router(paper, prefix="/api/v1/papers", tags=["papers"])
-
-
 # Health check
 @app.get("/health")
 def health_check():
@@ -40,10 +32,4 @@ def root():
         "message": "Welcome to GraphLab API",
         "docs": "/docs",
         "version": "1.0.0",
-        "endpoints": {
-            "auth": "/api/v1/auth",
-            "users": "/api/v1/users", 
-            "labs": "/api/v1/labs",
-            "papers": "/api/v1/papers"
-        }
     }
