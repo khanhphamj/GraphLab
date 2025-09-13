@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="graphlap@172.19.226.145" uuid="489c96dc-c304-43f3-b8c2-aeb7382bfe36">
+    <data-source source="LOCAL" name="test@172.19.226.145" uuid="489c96dc-c304-43f3-b8c2-aeb7382bfe36">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://172.19.226.145:5432/graphlap</jdbc-url>
+      <jdbc-url>jdbc:postgresql://172.19.226.145:5432/lab</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+    <data-source source="LOCAL" name="labgraph@172.19.226.145" uuid="f9ffe1af-c73f-4113-9145-a17fc7806d8d">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://172.19.226.145:5432/lab</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

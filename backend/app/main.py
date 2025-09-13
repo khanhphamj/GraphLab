@@ -1,5 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
+from app.routers import auth_router, users_router
+from app.utils.exceptions import (
+    GraphLabException, AuthenticationError, AuthorizationError,
+    ValidationError, NotFoundError, ConflictError, RateLimitError
+)
 
 app = FastAPI(
     title="GraphLab API",
@@ -19,6 +26,34 @@ app.add_middleware(
     allow_methods=["*"],         # Allow all HTTP methods
     allow_headers=["*"],         # Allow all headers
 )
+
+# Exception handlers
+@app.exception_handler(GraphLabException)
+async def graphlab_exception_handler(request: Request, exc: GraphLabException):
+    status_code_map = {
+        "AUTHENTICATION_ERROR": status.HTTP_401_UNAUTHORIZED,
+        "AUTHORIZATION_ERROR": status.HTTP_403_FORBIDDEN,
+        "VALIDATION_ERROR": status.HTTP_422_UNPROCESSABLE_ENTITY,
+        "NOT_FOUND_ERROR": status.HTTP_404_NOT_FOUND,
+        "CONFLICT_ERROR": status.HTTP_409_CONFLICT,
+        "RATE_LIMIT_ERROR": status.HTTP_429_TOO_MANY_REQUESTS,
+    }
+    
+    status_code = status_code_map.get(exc.code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": exc.code,
+            "message": exc.message,
+            "detail": str(exc)
+        }
+    )
+
+
+# Include routers
+app.include_router(auth_router)
+app.include_router(users_router)
 
 # Health check
 @app.get("/health")

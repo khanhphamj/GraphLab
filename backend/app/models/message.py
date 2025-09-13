@@ -26,5 +26,5 @@ class Message(Base):
     # relationships
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")
     sender: Mapped["User"] = relationship("User", back_populates="messages")
-    parent_message: Mapped[Optional["Message"]] = relationship("Message", remote_side=[id])
-    child_messages: Mapped[list["Message"]] = relationship("Message", back_populates="parent_message")
+    parent_message: Mapped[Optional["Message"]] = relationship("Message", remote_side=[id], foreign_keys=[parent_message_id])
+    child_messages: Mapped[list["Message"]] = relationship("Message", back_populates="parent_message", foreign_keys=[parent_message_id])

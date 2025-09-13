@@ -23,6 +23,6 @@ class KgSchema(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     
     # relationships
-    lab: Mapped["Lab"] = relationship("Lab", back_populates="kg_schemas")
+    lab: Mapped["Lab"] = relationship("Lab", back_populates="kg_schemas", foreign_keys=[lab_id])
     created_by_user: Mapped["User"] = relationship("User", back_populates="kg_schemas")
     neo4j_connections: Mapped[list["Neo4jConnection"]] = relationship("Neo4jConnection", back_populates="schema", cascade="all, delete-orphan")

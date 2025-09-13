@@ -27,5 +27,5 @@ class Neo4jConnection(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # relationships
-    lab: Mapped["Lab"] = relationship("Lab", back_populates="neo4j_connections")
-    schema: Mapped["KgSchema"] = relationship("KgSchema", back_populates="neo4j_connections")
+    lab: Mapped["Lab"] = relationship("Lab", back_populates="neo4j_connections", foreign_keys=[lab_id])
+    schema: Mapped["KgSchema"] = relationship("KgSchema", back_populates="neo4j_connections", foreign_keys=[schema_id])
