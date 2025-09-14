@@ -45,4 +45,13 @@ __all__ = [
     "LabMemberUpdate",
     "LabMemberResponse",
     "LabMemberListResponse",
+
+    # Brainstorm Session schemas
+    "BrainstormSessionCreate",
+    "BrainstormSessionUpdate",
+    "BrainstormSessionResponse",
+    "BrainstormSessionListResponse",
+    "KeywordStats",
+    "CrawlRequest",
+    "BrainstormSessionActionRequest",
 ]
