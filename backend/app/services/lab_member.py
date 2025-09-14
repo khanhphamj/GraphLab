@@ -43,15 +43,15 @@ class LabMemberService:
         if existing_member:
             raise ConflictError("User is already a member of this lab")
 
+        # Prevent adding owner role (only one owner per lab)
+        if request.role == 'owner':
+            raise AuthorizationError("Cannot add owner role. Transfer ownership instead.")
+
         # Create new member
         member = LabMember(
             lab_id=lab_id,
             user_id=request.user_id,
-            role=request.role,
-            can_manage_members=request.can_manage_members,
-            can_edit_schema=request.can_edit_schema,
-            can_run_jobs=request.can_run_jobs,
-            can_delete_data=request.can_delete_data
+            role=request.role
         )
         self.db.add(member)
         self.db.commit()
@@ -118,26 +118,22 @@ class LabMemberService:
         if not member:
             raise NotFoundError("Member not found")
 
+        # Prevent changing owner role (use transfer ownership instead)
+        if member.role == 'owner' or (request.role and request.role == 'owner'):
+            raise AuthorizationError("Cannot change owner role. Use transfer ownership instead.")
+
         # Prevent removing the last admin (if updating role)
-        if request.role and request.role != 'admin':
+        if request.role and request.role not in ['admin', 'owner']:
             admin_count = self.db.query(LabMember).filter(
-                and_(LabMember.lab_id == lab_id, LabMember.role == 'admin')
+                and_(LabMember.lab_id == lab_id, LabMember.role.in_(['admin', 'owner']))
             ).count()
             
-            if admin_count <= 1 and member.role == 'admin':
-                raise ConflictError("Cannot remove the last admin from the lab")
+            if admin_count <= 1 and member.role in ['admin', 'owner']:
+                raise ConflictError("Cannot remove the last admin/owner from the lab")
 
         # Update fields
         if request.role is not None:
             member.role = request.role
-        if request.can_manage_members is not None:
-            member.can_manage_members = request.can_manage_members
-        if request.can_edit_schema is not None:
-            member.can_edit_schema = request.can_edit_schema
-        if request.can_run_jobs is not None:
-            member.can_run_jobs = request.can_run_jobs
-        if request.can_delete_data is not None:
-            member.can_delete_data = request.can_delete_data
 
         self.db.commit()
         self.db.refresh(member)
@@ -158,10 +154,13 @@ class LabMemberService:
         if not member:
             raise NotFoundError("Member not found")
 
-        # Prevent removing the last admin
+        # Prevent removing owner or the last admin
+        if member.role == 'owner':
+            raise AuthorizationError("Cannot remove lab owner. Transfer ownership first.")
+            
         if member.role == 'admin':
             admin_count = self.db.query(LabMember).filter(
-                and_(LabMember.lab_id == lab_id, LabMember.role == 'admin')
+                and_(LabMember.lab_id == lab_id, LabMember.role.in_(['admin', 'owner']))
             ).count()
             
             if admin_count <= 1:
@@ -192,7 +191,7 @@ class LabMemberService:
         return member is not None
 
     async def _user_can_manage_members(self, user_id: uuid.UUID, lab_id: uuid.UUID) -> bool:
-        """Check if user can manage lab members"""
+        """Check if user can manage lab members (owner or admin)"""
         lab = self.db.query(Lab).filter(
             and_(Lab.id == lab_id, Lab.deleted_at.is_(None))
         ).first()
@@ -200,17 +199,16 @@ class LabMemberService:
         if not lab:
             return False
 
-        # Check if owner
+        # Check if lab owner
         if lab.owner_id == user_id:
             return True
 
-        # Check if admin member with manage_members permission
+        # Check if admin member
         member = self.db.query(LabMember).filter(
             and_(
                 LabMember.lab_id == lab_id,
                 LabMember.user_id == user_id,
-                LabMember.role == 'admin',
-                LabMember.can_manage_members == True
+                LabMember.role.in_(['owner', 'admin'])
             )
         ).first()
         
@@ -225,14 +223,12 @@ class LabMemberService:
             user = member.user
 
         return LabMemberResponse(
+            id=member.id,
             lab_id=member.lab_id,
             user_id=member.user_id,
             role=member.role,
-            can_manage_members=member.can_manage_members,
-            can_edit_schema=member.can_edit_schema,
-            can_run_jobs=member.can_run_jobs,
-            can_delete_data=member.can_delete_data,
             joined_at=member.joined_at,
+            left_at=member.left_at,
             user_name=user.name if user else None,
             user_email=user.email if user else None
         )

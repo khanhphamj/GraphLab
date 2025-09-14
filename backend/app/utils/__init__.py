@@ -9,6 +9,7 @@ from .exceptions import (
     AuthenticationError, AuthorizationError, ValidationError, NotFoundError,
     ConflictError, RateLimitError
 )
+from .permissions import LabPermissions, get_role_level, can_manage_role, get_role_description
 
 __all__ = [
     # Slug utils
@@ -21,5 +22,7 @@ __all__ = [
     'send_verification_email', 'send_password_reset_email',
     # Exception utils
     'AuthenticationError', 'AuthorizationError', 'ValidationError', 'NotFoundError',
-    'ConflictError', 'RateLimitError'
+    'ConflictError', 'RateLimitError',
+    # Permission utils
+    'LabPermissions', 'get_role_level', 'can_manage_role', 'get_role_description'
 ]

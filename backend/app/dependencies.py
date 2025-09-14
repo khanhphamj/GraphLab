@@ -205,12 +205,12 @@ async def require_lab_admin(
     if lab.owner_id == current_user.id:
         return lab
     
-    # Check if admin member
+    # Check if admin/owner member
     member = db.query(LabMember).filter(
         and_(
             LabMember.lab_id == lab.id,
             LabMember.user_id == current_user.id,
-            LabMember.role == 'admin'
+            LabMember.role.in_(['owner', 'admin'])
         )
     ).first()
     
@@ -228,18 +228,17 @@ async def require_lab_member_manager(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ) -> Lab:
-    """Require user to be lab owner or admin member with manage_members permission"""
+    """Require user to be lab owner or admin member (can manage members)"""
     # Check if owner
     if lab.owner_id == current_user.id:
         return lab
     
-    # Check if admin member with manage_members permission
+    # Check if admin/owner member
     member = db.query(LabMember).filter(
         and_(
             LabMember.lab_id == lab.id,
             LabMember.user_id == current_user.id,
-            LabMember.role == 'admin',
-            LabMember.can_manage_members == True
+            LabMember.role.in_(['owner', 'admin'])
         )
     ).first()
     
