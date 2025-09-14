@@ -1,14 +1,17 @@
 """Dependencies for FastAPI routes"""
 
+import uuid
 from typing import Optional, Annotated
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 
 from app.db.session import get_db
-from app.models import User, UserSession, ApiKey
+from app.models import User, UserSession, ApiKey, Lab, LabMember
 from app.services.auth import AuthService
 from app.services.api_key import ApiKeyService
+from app.services.lab import LabService
 from app.utils.exceptions import AuthenticationError, AuthorizationError
 
 # Security schemes
@@ -156,3 +159,94 @@ def get_client_ip(request: Request) -> Optional[str]:
 def get_user_agent(request: Request) -> Optional[str]:
     """Get user agent from request"""
     return request.headers.get("User-Agent")
+
+
+async def get_lab_by_id(
+    lab_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)]
+) -> Lab:
+    """Get lab by ID and check user access"""
+    lab_service = LabService(db)
+    try:
+        lab_response = await lab_service.get_lab_by_id(current_user.id, lab_id)
+        # Return the actual Lab model for further use
+        lab = db.query(Lab).filter(Lab.id == lab_id).first()
+        return lab
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lab not found")
+        elif "access denied" in str(e).lower():
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        else:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+async def require_lab_owner(
+    lab: Annotated[Lab, Depends(get_lab_by_id)],
+    current_user: Annotated[User, Depends(get_current_active_user)]
+) -> Lab:
+    """Require user to be lab owner"""
+    if lab.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only lab owner can perform this action"
+        )
+    return lab
+
+
+async def require_lab_admin(
+    lab: Annotated[Lab, Depends(get_lab_by_id)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)]
+) -> Lab:
+    """Require user to be lab owner or admin member"""
+    # Check if owner
+    if lab.owner_id == current_user.id:
+        return lab
+    
+    # Check if admin member
+    member = db.query(LabMember).filter(
+        and_(
+            LabMember.lab_id == lab.id,
+            LabMember.user_id == current_user.id,
+            LabMember.role == 'admin'
+        )
+    ).first()
+    
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    
+    return lab
+
+
+async def require_lab_member_manager(
+    lab: Annotated[Lab, Depends(get_lab_by_id)],
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)]
+) -> Lab:
+    """Require user to be lab owner or admin member with manage_members permission"""
+    # Check if owner
+    if lab.owner_id == current_user.id:
+        return lab
+    
+    # Check if admin member with manage_members permission
+    member = db.query(LabMember).filter(
+        and_(
+            LabMember.lab_id == lab.id,
+            LabMember.user_id == current_user.id,
+            LabMember.role == 'admin',
+            LabMember.can_manage_members == True
+        )
+    ).first()
+    
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Member management privileges required"
+        )
+    
+    return lab

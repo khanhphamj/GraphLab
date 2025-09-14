@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.routers import auth_router, users_router
+from app.routers import auth_router, users_router, labs_router, lab_members_router
 from app.utils.exceptions import (
     GraphLabException, AuthenticationError, AuthorizationError,
     ValidationError, NotFoundError, ConflictError, RateLimitError
@@ -54,6 +54,8 @@ async def graphlab_exception_handler(request: Request, exc: GraphLabException):
 # Include routers
 app.include_router(auth_router)
 app.include_router(users_router)
+app.include_router(labs_router)
+app.include_router(lab_members_router)
 
 # Health check
 @app.get("/health")

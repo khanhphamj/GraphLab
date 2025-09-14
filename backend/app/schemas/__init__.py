@@ -1,6 +1,8 @@
 from .auth import *
 from .user import *
 from .api_key import *
+from .lab import *
+from .lab_member import *
 
 __all__ = [
     # Auth schemas
@@ -29,4 +31,18 @@ __all__ = [
     "ApiKeyUpdate",
     "ApiKeyResponse",
     "ApiKeyCreateResponse",
+    
+    # Lab schemas
+    "LabCreate",
+    "LabUpdate",
+    "LabResponse",
+    "LabListResponse",
+    "ActivateSchemaRequest",
+    "ActivateConnectionRequest",
+    
+    # Lab Member schemas
+    "LabMemberCreate",
+    "LabMemberUpdate",
+    "LabMemberResponse",
+    "LabMemberListResponse",
 ]
