@@ -3,6 +3,10 @@ from .user import *
 from .api_key import *
 from .lab import *
 from .lab_member import *
+from .brainstorm_session import *
+from .research_keyword import *
+from .kg_schema import *
+from .neo4j_connection import *
 
 __all__ = [
     # Auth schemas
@@ -54,4 +58,44 @@ __all__ = [
     "KeywordStats",
     "CrawlRequest",
     "BrainstormSessionActionRequest",
+    
+    # Research Keyword schemas
+    "ResearchKeywordCreate",
+    "ResearchKeywordUpdate",
+    "ResearchKeywordResponse",
+    "ResearchKeywordListResponse",
+    "BulkKeywordItem",
+    "BulkKeywordCreate",
+    "BulkKeywordDelete",
+    "BulkOperationResult",
+    "KeywordSourceStats",
+    "SessionKeywordStats",
+
+    # KG Schema schemas
+    "KgSchemaCreate",
+    "KgSchemaUpdate",
+    "KgSchemaResponse",
+    "KgSchemaListResponse",
+    "KgSchemaValidationRequest",
+    "KgSchemaValidationResponse",
+    "KgSchemaDiffRequest",
+    "KgSchemaDiffResponse",
+    "KgSchemaMigrateRequest",
+    "KgSchemaMigrateResponse",
+    "KgSchemaCloneRequest",
+    "KgSchemaImportRequest",
+    "KgSchemaUsageResponse",
+
+    # Neo4j Connection schemas
+    "Neo4jConnectionCreate",
+    "Neo4jConnectionUpdate",
+    "Neo4jConnectionResponse",
+    "Neo4jConnectionListResponse",
+    "Neo4jConnectionTestRequest",
+    "Neo4jConnectionTestResponse",
+    "Neo4jConnectionHealthResponse",
+    "Neo4jConnectionSyncRequest",
+    "Neo4jConnectionSyncResponse",
+    "Neo4jConnectionRotateSecretRequest",
+    "Neo4jConnectionRotateSecretResponse",
 ]

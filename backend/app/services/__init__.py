@@ -3,6 +3,10 @@ from .user import UserService
 from .api_key import ApiKeyService
 from .lab import LabService
 from .lab_member import LabMemberService
+from .brainstorm_session import BrainstormSessionService
+from .research_keyword import ResearchKeywordService
+from .kg_schema import KgSchemaService
+from .neo4j_connection import Neo4jConnectionService
 
 __all__ = [
     "AuthService",
@@ -10,4 +14,8 @@ __all__ = [
     "ApiKeyService",
     "LabService",
     "LabMemberService",
+    "BrainstormSessionService",
+    "ResearchKeywordService",
+    "KgSchemaService",
+    "Neo4jConnectionService",
 ]
