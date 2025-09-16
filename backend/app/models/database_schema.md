@@ -80,6 +80,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 **Relationships**:
 - Many-to-one: owner (User)
 - One-to-many: members, brainstorm_sessions, kg_schemas, neo4j_connections, processing_jobs, research_papers, conversations, audit_logs
+- Many-to-one: active_connection (Neo4jConnection), active_schema (KgSchema) - current active Neo4j connection and KG schema
 
 ### Neo4j Connections Table (`neo4j_connections`)
 **Purpose**: Connection configurations for Neo4j databases
@@ -93,6 +94,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `database_name` | String | Not Null | Neo4j database name |
 | `username` | String | Not Null | Neo4j username |
 | `secret_id` | String | Not Null | Reference to stored password |
+| `namespace` | String | Not Null | Neo4j namespace for data isolation |
 | `schema_id` | UUID | Foreign Key (kg_schemas), Not Null | Associated KG schema |
 | `is_active` | Boolean | Not Null, Default True | Connection active status |
 | `last_sync_at` | DateTime | Optional | Last synchronization time |
@@ -118,7 +120,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 
 **Constraints**:
 - Unique constraint on (lab_id, version)
-- Check constraint: version > 0
+- Check constraint: version > 0 (ensures positive version numbers)
 
 ---
 
@@ -186,7 +188,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 **Conversation Types**: research_chat, schema_design, data_exploration
 
 ### Messages Table (`messages`)
-**Purpose**: Individual messages within conversations
+**Purpose**: Individual messages within conversations with threading support
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
@@ -205,6 +207,12 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
 
 **Message Types**: text, query_result, schema_suggestion, error
+
+**Threading Support**:
+- Messages can form hierarchical threads using parent/child relationships
+- `parent_message_id` creates self-referencing relationship for message threading
+- `thread_position` indicates the message's position within its thread
+- Supports nested conversations and message branching
 
 ### Brainstorm Sessions Table (`brainstorm_sessions`)
 **Purpose**: Collaborative brainstorming sessions
@@ -240,6 +248,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 
 **Sources**: user, ai, imported
 
+**Indexes**:
+- Unique index on (session_id, LOWER(term)) - ensures case-insensitive uniqueness of terms per session
+
 ---
 
 ## 5. Processing Infrastructure Tables
@@ -270,8 +281,16 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
 | `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
 
-**Job Types**: paper_crawl, paper_process, entity_extract, vector_embed, kg_upsert, schema_migrate, index_rebuild, data_export
+**Job Types**: paper_crawl, paper_process, entity_extract, vector_embed, kg_upsert, schema_migrate, index_rebuild, data_export, database_create
 **Job Status**: queued, running, completed, failed, cancelled
+
+#### Database Create Job Details
+**Purpose**: Automatically create Neo4j databases when new connections are established
+**Typical Duration**: 30 seconds - 2 minutes
+**Dependencies**: Requires active Neo4j connection
+**Retry Policy**: 3 attempts with exponential backoff
+**Input Config**: `connection_id`, `database_name`, `user_id`
+**Output Result**: `database_created`, `schema_initialized`, `error_details`
 
 ### Job Steps Table (`job_steps`)
 **Purpose**: Individual steps within processing jobs
@@ -291,7 +310,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 
 **Constraints**:
 - Unique constraint on (job_id, step_order)
-- Check constraint: step_order > 0
+- Check constraint: step_order > 0 (ensures positive step ordering)
 **Step Status**: pending, running, completed, failed, skipped
 
 ---
@@ -437,3 +456,37 @@ Processing Job (1) ──── (M) Job Step
 ```
 
 This schema supports a comprehensive research lab management system with collaboration features, knowledge graph integration, and robust security controls.
+
+---
+
+## Database Implementation Details
+
+### Foreign Key Constraints and Cascade Behaviors
+
+**Cascade Delete Rules**:
+- **User deletion**: Cascades to all related entities (labs, sessions, messages, etc.)
+- **Lab deletion**: Cascades to members, sessions, papers, connections, and jobs
+- **Conversation/Message deletion**: Cascades from conversation to messages
+- **Processing Job deletion**: Cascades to job steps
+
+**Foreign Key Relationships**:
+- **Self-referencing**: Messages table supports parent/child message threading
+- **Multiple FKs to same table**: Lab table has separate FKs for active_connection and active_schema
+- **Soft deletes**: All major entities support soft deletion with `deleted_at` timestamps
+
+### Database Indexes
+
+**Performance Indexes**:
+- Unique composite indexes for business key constraints
+- Case-insensitive unique indexes for keyword terms
+- Foreign key indexes automatically created by PostgreSQL
+
+**Custom Indexes**:
+- Research Keywords: Unique index on (session_id, LOWER(term)) for case-insensitive uniqueness
+
+### Check Constraints
+
+**Data Validation**:
+- **Version numbers**: KG schemas require version > 0
+- **Step ordering**: Job steps require step_order > 0
+- **Enum values**: All enum fields have database-level validation

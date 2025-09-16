@@ -11,7 +11,7 @@ class ProcessingJob(Base):
     __tablename__ = "processing_jobs"
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)
-    job_type: Mapped[str] = mapped_column(Enum('paper_crawl', 'paper_process', 'entity_extract', 'vector_embed', 'kg_upsert', 'schema_migrate', 'index_rebuild', 'data_export', name='processing_job_type'), nullable=False)
+    job_type: Mapped[str] = mapped_column(Enum('paper_crawl', 'paper_process', 'entity_extract', 'vector_embed', 'kg_upsert', 'schema_migrate', 'index_rebuild', 'data_export', 'database_create', name='processing_job_type'), nullable=False)
     status: Mapped[str] = mapped_column(Enum('queued', 'running', 'completed', 'failed', 'cancelled', name='processing_job_status'), nullable=False, default='queued')
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
