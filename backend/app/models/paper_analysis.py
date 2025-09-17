@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import String, ForeignKey, DateTime, JSON, Numeric, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -18,7 +18,7 @@ class PaperAnalysis(Base):
     result_data: Mapped[Optional[dict]] = mapped_column(JSON)
     confidence_score: Mapped[Optional[float]] = mapped_column(Numeric)
     model_used: Mapped[Optional[str]] = mapped_column(String)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
     
     # relationships
     paper: Mapped["ResearchPaper"] = relationship("ResearchPaper", back_populates="paper_analysis")

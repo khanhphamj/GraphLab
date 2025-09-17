@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import String, Text, ForeignKey, DateTime, Numeric, Boolean, Enum, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -20,7 +20,7 @@ class ResearchKeyword(Base):
     source: Mapped[str] = mapped_column(Enum('user', 'ai', 'imported', name='research_keyword_source'), nullable=False)
     rationale: Mapped[Optional[str]] = mapped_column(Text)
     is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
     
     # relationships
     session: Mapped["BrainstormSession"] = relationship("BrainstormSession", back_populates="research_keywords")

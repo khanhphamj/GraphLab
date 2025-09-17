@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Integer, BigInteger, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -25,8 +25,8 @@ class Message(Base):
     parent_message_id: Mapped[Optional[uuid.UUID]] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("messages.id"))
     thread_position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     seq: Mapped[int] = mapped_column(BigInteger, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc, onupdate=timezone.utc)
     
     # relationships
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")
