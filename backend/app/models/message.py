@@ -2,13 +2,18 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Integer, BigInteger, Enum
+from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Integer, BigInteger, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class Message(Base):
     __tablename__ = "messages"
+    __table_args__ = (
+        Index("ix_messages_conversation_id", "conversation_id"),
+        Index("ix_messages_sender_id", "sender_id"),
+        Index("ix_messages_parent_message_id", "parent_message_id"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     conversation_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
     sender_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -26,5 +31,5 @@ class Message(Base):
     # relationships
     conversation: Mapped["Conversation"] = relationship("Conversation", back_populates="messages")
     sender: Mapped["User"] = relationship("User", back_populates="messages")
-    parent_message: Mapped[Optional["Message"]] = relationship("Message", remote_side=[id], foreign_keys=[parent_message_id])
+    parent_message: Mapped[Optional["Message"]] = relationship("Message", remote_side=[id], foreign_keys=[parent_message_id], back_populates="child_messages")
     child_messages: Mapped[list["Message"]] = relationship("Message", back_populates="parent_message", foreign_keys=[parent_message_id])

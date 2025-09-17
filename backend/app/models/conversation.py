@@ -2,13 +2,17 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, ForeignKey, DateTime, JSON, Enum
+from sqlalchemy import String, ForeignKey, DateTime, JSON, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class Conversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = (
+        Index("ix_conversations_lab_id", "lab_id"),
+        Index("ix_conversations_owner_id", "owner_id"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)
     owner_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

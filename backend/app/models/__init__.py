@@ -7,7 +7,7 @@ from .kg_schema import KgSchema
 from .neo4j_connection import Neo4jConnection
 from .processing_job import ProcessingJob
 from .job_step import JobStep
-from .paper import ResearchPaper
+from .research_paper import ResearchPaper
 from .paper_analysis import PaperAnalysis
 from .conversation import Conversation
 from .message import Message

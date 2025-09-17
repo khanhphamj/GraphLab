@@ -2,13 +2,17 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Enum
+from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class BrainstormSession(Base):
     __tablename__ = "brainstorm_sessions"
+    __table_args__ = (
+        Index("ix_brainstorm_sessions_lab_id", "lab_id"),
+        Index("ix_brainstorm_sessions_created_by", "created_by"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)
     created_by: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

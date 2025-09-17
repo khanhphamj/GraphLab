@@ -2,13 +2,16 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, ForeignKey, DateTime, Enum
+from sqlalchemy import String, ForeignKey, DateTime, Enum, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
 class UserVerification(Base):
     __tablename__ = "user_verifications"
+    __table_args__ = (
+        Index("ix_user_verifications_user_id", "user_id"),
+    )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     verification_type: Mapped[str] = mapped_column(Enum('email_verify', 'password_reset', 'two_factor', name='verification_type'), nullable=False)

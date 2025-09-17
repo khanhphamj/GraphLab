@@ -32,10 +32,10 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `hashed_password` | String | Not Null | Bcrypt-hashed password |
 | `profile` | JSON | Optional | User profile data |
 | `preferences` | JSON | Optional | User preferences/settings |
-| `email_verified_at` | DateTime | Optional | Email verification timestamp |
-| `created_at` | DateTime | Not Null, Default UTC | Account creation time |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update time |
-| `deleted_at` | DateTime | Optional | Soft delete timestamp |
+| `email_verified_at` | DateTime(timezone=True) | Optional | Email verification timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Account creation time |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update time |
+| `deleted_at` | DateTime(timezone=True) | Optional | Soft delete timestamp |
 
 **Relationships**:
 - One-to-many: labs (as owner), lab_memberships, brainstorm_sessions, kg_schemas, conversations, messages, user_sessions, user_verifications, oauth_accounts, api_keys, audit_logs
@@ -50,7 +50,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `user_id` | UUID | Foreign Key (users), Not Null | Reference to user |
 | `role` | Enum | Not Null | Member role: owner, admin, editor, viewer |
 | `joined_at` | DateTime | Not Null, Default UTC | Membership start time |
-| `left_at` | DateTime | Optional | Membership end time |
+| `left_at` | DateTime(timezone=True) | Optional | Membership end time |
 
 **Constraints**:
 - Unique constraint on (lab_id, user_id)
@@ -73,9 +73,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `active_connection_id` | UUID | Foreign Key (neo4j_connections) | Current Neo4j connection |
 | `active_schema_id` | UUID | Foreign Key (kg_schemas) | Current KG schema |
 | `status` | Enum | Not Null, Default 'active' | Lab status: active, archived, suspended |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
-| `deleted_at` | DateTime | Optional | Soft delete timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
+| `deleted_at` | DateTime(timezone=True) | Optional | Soft delete timestamp |
 
 **Relationships**:
 - Many-to-one: owner (User)
@@ -97,9 +97,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `namespace` | String | Not Null | Neo4j namespace for data isolation |
 | `schema_id` | UUID | Foreign Key (kg_schemas), Not Null | Associated KG schema |
 | `is_active` | Boolean | Not Null, Default True | Connection active status |
-| `last_sync_at` | DateTime | Optional | Last synchronization time |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
+| `last_sync_at` | DateTime(timezone=True) | Optional | Last synchronization time |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
 
 **Constraints**:
 - Unique constraint on (lab_id, connection_name)
@@ -116,11 +116,12 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `description` | Text | Optional | Schema description |
 | `is_active` | Boolean | Not Null, Default False | Schema active status |
 | `created_by` | UUID | Foreign Key (users), Not Null | Schema creator |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
 
 **Constraints**:
 - Unique constraint on (lab_id, version)
 - Check constraint: version > 0 (ensures positive version numbers)
+- **Application-level constraint**: Only one active schema per lab (enforced in business logic, not database constraint)
 
 ---
 
@@ -143,8 +144,8 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `processing_status` | Enum | Not Null, Default 'pending' | Processing status |
 | `keywords_matched` | Array(String) | Optional | Matched research keywords |
 | `published_date` | Date | Optional | Publication date |
-| `crawled_at` | DateTime | Optional | Crawling timestamp |
-| `processed_at` | DateTime | Optional | Processing completion time |
+| `crawled_at` | DateTime(timezone=True) | Optional | Crawling timestamp |
+| `processed_at` | DateTime(timezone=True) | Optional | Processing completion time |
 
 **Constraints**:
 - Unique constraint on (lab_id, arxiv_id)
@@ -181,9 +182,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `conversation_type` | Enum | Not Null | Type of conversation |
 | `active_filters` | JSON | Optional | Active data filters |
 | `query_history` | JSON | Optional | Query history |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
-| `deleted_at` | DateTime | Optional | Soft delete timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
+| `deleted_at` | DateTime(timezone=True) | Optional | Soft delete timestamp |
 
 **Conversation Types**: research_chat, schema_design, data_exploration
 
@@ -203,8 +204,8 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `parent_message_id` | UUID | Foreign Key (messages) | Parent message for threading |
 | `thread_position` | Integer | Not Null, Default 0 | Position in thread |
 | `seq` | BigInteger | Not Null | Sequence number |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
 
 **Message Types**: text, query_result, schema_suggestion, error
 
@@ -226,9 +227,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `description` | Text | Optional | Session description |
 | `status` | Enum | Not Null, Default 'active' | Session status |
 | `session_data` | JSON | Optional | Session data and state |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
-| `deleted_at` | DateTime | Optional | Soft delete timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
+| `deleted_at` | DateTime(timezone=True) | Optional | Soft delete timestamp |
 
 **Session Status**: active, completed, archived
 
@@ -244,7 +245,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `source` | Enum | Not Null | Keyword source |
 | `rationale` | Text | Optional | Keyword rationale |
 | `is_primary` | Boolean | Not Null, Default False | Primary keyword flag |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
 
 **Sources**: user, ai, imported
 
@@ -275,11 +276,11 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `progress_percent` | Integer | Optional | Progress percentage |
 | `processed_items` | Integer | Not Null, Default 0 | Items processed |
 | `total_items` | Integer | Optional | Total items to process |
-| `retry_at` | DateTime | Optional | Next retry time |
-| `started_at` | DateTime | Optional | Job start time |
-| `completed_at` | DateTime | Optional | Job completion time |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
+| `retry_at` | DateTime(timezone=True) | Optional | Next retry time |
+| `started_at` | DateTime(timezone=True) | Optional | Job start time |
+| `completed_at` | DateTime(timezone=True) | Optional | Job completion time |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
 
 **Job Types**: paper_crawl, paper_process, entity_extract, vector_embed, kg_upsert, schema_migrate, index_rebuild, data_export, database_create
 **Job Status**: queued, running, completed, failed, cancelled
@@ -305,8 +306,8 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `input_data` | JSON | Optional | Step input data |
 | `output_data` | JSON | Optional | Step output data |
 | `error_message` | Text | Optional | Error message |
-| `started_at` | DateTime | Optional | Step start time |
-| `completed_at` | DateTime | Optional | Step completion time |
+| `started_at` | DateTime(timezone=True) | Optional | Step start time |
+| `completed_at` | DateTime(timezone=True) | Optional | Step completion time |
 
 **Constraints**:
 - Unique constraint on (job_id, step_order)
@@ -326,13 +327,13 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `user_id` | UUID | Foreign Key (users), Not Null | Associated user |
 | `session_token_hash` | String | Not Null, Unique | Hashed session token |
 | `refresh_token_hash` | String | Optional | Hashed refresh token |
-| `expires_at` | DateTime | Not Null | Session expiration time |
-| `last_active_at` | DateTime | Optional | Last activity time |
+| `expires_at` | DateTime(timezone=True) | Not Null | Session expiration time |
+| `last_active_at` | DateTime(timezone=True) | Optional | Last activity time |
 | `ip_address` | INET | Optional | Client IP address |
 | `user_agent` | Text | Optional | Client user agent |
 | `is_active` | Boolean | Not Null, Default True | Session active status |
-| `revoked_at` | DateTime | Optional | Revocation timestamp |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
+| `revoked_at` | DateTime(timezone=True) | Optional | Revocation timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
 
 ### User Verifications Table (`user_verifications`)
 **Purpose**: Email verification and password reset tokens
@@ -343,9 +344,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `user_id` | UUID | Foreign Key (users), Not Null | Associated user |
 | `verification_type` | Enum | Not Null | Type of verification |
 | `token_hash` | String | Not Null, Unique | Hashed verification token |
-| `expires_at` | DateTime | Not Null | Token expiration time |
-| `used_at` | DateTime | Optional | Token usage time |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
+| `expires_at` | DateTime(timezone=True) | Not Null | Token expiration time |
+| `used_at` | DateTime(timezone=True) | Optional | Token usage time |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
 
 **Verification Types**: email_verify, password_reset, two_factor
 
@@ -361,9 +362,9 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `provider_email` | String | Optional | Email from provider |
 | `access_token_id` | String | Optional | Stored access token reference |
 | `refresh_token_id` | String | Optional | Stored refresh token reference |
-| `expires_at` | DateTime | Optional | Token expiration time |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
-| `updated_at` | DateTime | Not Null, Auto-update | Last update timestamp |
+| `expires_at` | DateTime(timezone=True) | Optional | Token expiration time |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
+| `updated_at` | DateTime(timezone=True) | Not Null, Auto-update | Last update timestamp |
 
 **Constraints**:
 - Unique constraint on (provider, provider_user_id)
@@ -382,11 +383,11 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `can_write` | Boolean | Not Null, Default False | Write permission |
 | `can_admin` | Boolean | Not Null, Default False | Admin permission |
 | `lab_access` | JSON | Optional | Lab-specific access controls |
-| `last_used_at` | DateTime | Optional | Last usage time |
-| `expires_at` | DateTime | Optional | Expiration time |
+| `last_used_at` | DateTime(timezone=True) | Optional | Last usage time |
+| `expires_at` | DateTime(timezone=True) | Optional | Expiration time |
 | `is_active` | Boolean | Not Null, Default True | API key active status |
-| `revoked_at` | DateTime | Optional | Revocation timestamp |
-| `created_at` | DateTime | Not Null, Default UTC | Creation timestamp |
+| `revoked_at` | DateTime(timezone=True) | Optional | Revocation timestamp |
+| `created_at` | DateTime(timezone=True) | Not Null, Default UTC | Creation timestamp |
 
 ---
 
@@ -479,7 +480,7 @@ This schema supports a comprehensive research lab management system with collabo
 **Performance Indexes**:
 - Unique composite indexes for business key constraints
 - Case-insensitive unique indexes for keyword terms
-- Foreign key indexes automatically created by PostgreSQL
+- Foreign key columns (indexes not automatically created by PostgreSQL, must be explicitly defined)
 
 **Custom Indexes**:
 - Research Keywords: Unique index on (session_id, LOWER(term)) for case-insensitive uniqueness

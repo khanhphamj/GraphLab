@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Integer, Enum, UniqueConstraint, CheckConstraint
+from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Integer, Enum, UniqueConstraint, CheckConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -12,6 +12,7 @@ class JobStep(Base):
     __table_args__ = (
         UniqueConstraint("job_id", "step_order", name="uq_job_steps_job_order"),
         CheckConstraint("step_order > 0", name="ck_job_steps_order_positive"),
+        Index("ix_job_steps_job_id", "job_id"),
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     job_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("processing_jobs.id", ondelete="CASCADE"), nullable=False)

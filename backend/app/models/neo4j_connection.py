@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, ForeignKey, DateTime, Boolean, UniqueConstraint
+from sqlalchemy import String, ForeignKey, DateTime, Boolean, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -11,6 +11,8 @@ class Neo4jConnection(Base):
     __tablename__ = "neo4j_connections"
     __table_args__ = (
         UniqueConstraint("lab_id", "connection_name", name="uq_neo4j_connections_lab_name"),
+        Index("ix_neo4j_connections_lab_id", "lab_id"),
+        Index("ix_neo4j_connections_schema_id", "schema_id"),
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)

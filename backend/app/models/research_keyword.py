@@ -11,6 +11,7 @@ class ResearchKeyword(Base):
     __tablename__ = "research_keywords"
     __table_args__ = (
         Index("uq_research_keywords_session_term", "session_id", func.lower("term"), unique=True),
+        Index("ix_research_keywords_session_id", "session_id"),
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("brainstorm_sessions.id", ondelete="CASCADE"), nullable=False)

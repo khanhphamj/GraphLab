@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime, date
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY
-from sqlalchemy import String, Text, ForeignKey, DateTime, Date, Enum, UniqueConstraint
+from sqlalchemy import String, Text, ForeignKey, DateTime, Date, Enum, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -12,6 +12,7 @@ class ResearchPaper(Base):
     __table_args__ = (
         UniqueConstraint("lab_id", "arxiv_id", name="uq_research_papers_lab_arxiv"),
         UniqueConstraint("lab_id", "doi", name="uq_research_papers_lab_doi"),
+        Index("ix_research_papers_lab_id", "lab_id")
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)

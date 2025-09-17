@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, ForeignKey, DateTime, Enum, UniqueConstraint
+from sqlalchemy import String, ForeignKey, DateTime, Enum, UniqueConstraint, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -11,6 +11,7 @@ class UserOauthAccount(Base):
     __tablename__ = "user_oauth_accounts"
     __table_args__ = (
         UniqueConstraint("provider", "provider_user_id", name="uq_user_oauth_accounts_provider_user"),
+        Index("ix_user_oauth_accounts_user_id", "user_id"),
     )
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
