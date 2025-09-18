@@ -6,6 +6,7 @@ uvicorn[standard]==0.24.0
 sqlalchemy==2.0.23
 psycopg2-binary==2.9.9
 alembic==1.13.0
+neo4j==5.18.0
 
 # Authentication and security
 python-jose[cryptography]==3.3.0
