@@ -36,20 +36,6 @@ class LabPermissions:
             'view_data': True,
             'participate_conversations': True,
         },
-        'editor': {
-            'manage_lab': False,
-            'delete_lab': False,
-            'transfer_ownership': False,
-            'manage_members': False,
-            'manage_settings': False,
-            'manage_schemas': True,  # With approval/review
-            'manage_connections': False,
-            'run_jobs': True,
-            'delete_data': False,
-            'create_brainstorm': True,
-            'view_data': True,
-            'participate_conversations': True,
-        },
         'viewer': {
             'manage_lab': False,
             'delete_lab': False,
@@ -126,9 +112,8 @@ class LabPermissions:
 
 # Role hierarchy for comparison
 ROLE_HIERARCHY = {
-    'owner': 4,
-    'admin': 3,
-    'editor': 2,
+    'owner': 3,
+    'admin': 2,
     'viewer': 1
 }
 
@@ -143,9 +128,9 @@ def can_manage_role(current_role: str, target_role: str) -> bool:
     if current_role == 'owner':
         return target_role != 'owner'  # Owner can manage all except other owners
     elif current_role == 'admin':
-        return target_role in ['editor', 'viewer']  # Admin can manage editor/viewer
+        return target_role in ['viewer']  # Admin can manage viewer
     else:
-        return False  # Editor/Viewer cannot manage others
+        return False  # Viewer cannot manage others
 
 
 def get_role_description(role: str) -> str:
@@ -153,7 +138,6 @@ def get_role_description(role: str) -> str:
     descriptions = {
         'owner': 'Lab Owner - Full control of lab',
         'admin': 'Administrator - Manage members and settings',
-        'editor': 'Editor/Researcher - Create content and run jobs',
         'viewer': 'Viewer/Observer - Read-only access'
     }
     return descriptions.get(role, 'Unknown role')

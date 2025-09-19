@@ -343,7 +343,7 @@ class KgSchemaService:
         if not schema:
             raise NotFoundError("Schema not found")
 
-        # Check permissions - admin or editor with run_jobs permission
+        # Check permissions - admin with run_jobs permission
         user_role = await self._get_user_role_in_lab(user_id, schema.lab_id)
         if not (LabPermissions.is_admin_role(user_role) or LabPermissions.can_run_jobs(user_role)):
             raise AuthorizationError("Insufficient permissions to run migration jobs")

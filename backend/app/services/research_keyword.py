@@ -28,10 +28,10 @@ class ResearchKeywordService:
         upsert: bool = False
     ) -> Tuple[ResearchKeywordResponse, bool]:
         """
-        Create a new research keyword (Editor+ required)
+        Create a new research keyword (Admin required)
         Returns (keyword, is_created) tuple
         """
-        # Check session exists and user has editor+ permissions
+        # Check session exists and user has admin permissions
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -87,8 +87,8 @@ class ResearchKeywordService:
         session_id: uuid.UUID,
         request: BulkKeywordCreate
     ) -> BulkOperationResult:
-        """Bulk create/update keywords (Editor+ required)"""
-        # Check session exists and user has editor+ permissions
+        """Bulk create/update keywords (Admin required)"""
+        # Check session exists and user has admin permissions
         await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -248,7 +248,7 @@ class ResearchKeywordService:
         keyword_id: uuid.UUID,
         request: ResearchKeywordUpdate
     ) -> ResearchKeywordResponse:
-        """Update keyword (Editor+ required)"""
+        """Update keyword (Admin required)"""
         keyword = await self._get_keyword_with_permissions(
             current_user_id, keyword_id, "create_brainstorm"
         )
@@ -291,7 +291,7 @@ class ResearchKeywordService:
         current_user_id: uuid.UUID,
         keyword_id: uuid.UUID
     ) -> None:
-        """Delete keyword (Editor+ required)"""
+        """Delete keyword (Admin required)"""
         keyword = await self._get_keyword_with_permissions(
             current_user_id, keyword_id, "create_brainstorm"
         )
@@ -305,8 +305,8 @@ class ResearchKeywordService:
         session_id: uuid.UUID,
         request: BulkKeywordDelete
     ) -> BulkOperationResult:
-        """Bulk delete keywords (Editor+ required)"""
-        # Check session exists and user has editor+ permissions
+        """Bulk delete keywords (Admin required)"""
+        # Check session exists and user has admin permissions
         await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )

@@ -24,8 +24,8 @@ class BrainstormSessionService:
         lab_id: uuid.UUID, 
         request: BrainstormSessionCreate
     ) -> BrainstormSessionResponse:
-        """Create a new brainstorm session (Editor+ required)"""
-        # Check lab exists and user has editor+ permissions
+        """Create a new brainstorm session (Admin required)"""
+        # Check lab exists and user has admin permissions
         if not await self._user_can_create_brainstorm(current_user_id, lab_id):
             raise AuthorizationError("Insufficient permissions to create brainstorm sessions")
 
@@ -126,7 +126,7 @@ class BrainstormSessionService:
         session_id: uuid.UUID,
         request: BrainstormSessionUpdate
     ) -> BrainstormSessionResponse:
-        """Update session (Editor+ required)"""
+        """Update session (Admin required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -153,7 +153,7 @@ class BrainstormSessionService:
         current_user_id: uuid.UUID,
         session_id: uuid.UUID
     ) -> None:
-        """Soft delete session (Editor+ required)"""
+        """Soft delete session (Admin required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -167,7 +167,7 @@ class BrainstormSessionService:
         current_user_id: uuid.UUID,
         session_id: uuid.UUID
     ) -> BrainstormSessionResponse:
-        """Finalize/lock session (Editor+ required)"""
+        """Finalize/lock session (Admin required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -192,7 +192,7 @@ class BrainstormSessionService:
         current_user_id: uuid.UUID,
         session_id: uuid.UUID
     ) -> BrainstormSessionResponse:
-        """Archive session (Editor+ required)"""
+        """Archive session (Admin required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -210,7 +210,7 @@ class BrainstormSessionService:
         current_user_id: uuid.UUID,
         session_id: uuid.UUID
     ) -> BrainstormSessionResponse:
-        """Unarchive session (Editor+ required)"""
+        """Unarchive session (Admin required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "create_brainstorm"
         )
@@ -228,7 +228,7 @@ class BrainstormSessionService:
         current_user_id: uuid.UUID,
         session_id: uuid.UUID
     ) -> BrainstormSessionResponse:
-        """Clone session with keywords (Editor+ required)"""
+        """Clone session with keywords (Admin required)"""
         original_session = await self._get_session_with_permissions(
             current_user_id, session_id, "view_data"
         )
@@ -277,7 +277,7 @@ class BrainstormSessionService:
         session_id: uuid.UUID,
         request: CrawlRequest
     ) -> Dict[str, Any]:
-        """Start crawling job from session keywords (Editor+ with can_run_jobs required)"""
+        """Start crawling job from session keywords (Admin with can_run_jobs required)"""
         session = await self._get_session_with_permissions(
             current_user_id, session_id, "run_jobs"
         )

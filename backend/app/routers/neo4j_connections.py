@@ -212,7 +212,7 @@ async def sync_neo4j_connection(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Sync Neo4j connection with active schema (Admin or Editor+ with run_jobs permission)"""
+    """Sync Neo4j connection with active schema (Admin with run_jobs permission)"""
     try:
         service = Neo4jConnectionService(db)
         return await service.sync_connection(current_user.id, connection_id, request)
@@ -228,7 +228,7 @@ async def rebuild_neo4j_indexes(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Rebuild indexes for Neo4j connection (Admin or Editor+ with run_jobs permission)"""
+    """Rebuild indexes for Neo4j connection (Admin with run_jobs permission)"""
     try:
         service = Neo4jConnectionService(db)
         return await service.rebuild_indexes(current_user.id, connection_id)

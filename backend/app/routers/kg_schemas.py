@@ -161,7 +161,7 @@ async def update_kg_schema(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Update KG schema description/definition (Editor+ only)"""
+    """Update KG schema description/definition (Admin only)"""
     try:
         service = KgSchemaService(db)
         return await service.update_schema(current_user.id, schema_id, request)
@@ -200,7 +200,7 @@ async def validate_kg_schema(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Validate KG schema definition (Editor+ only)"""
+    """Validate KG schema definition (Admin only)"""
     try:
         service = KgSchemaService(db)
         return await service.validate_schema(current_user.id, schema_id, request)
@@ -217,7 +217,7 @@ async def get_kg_schema_diff(
     db: Annotated[Session, Depends(get_db)],
     against: str = Query(..., description="Version number or schema ID to compare against")
 ):
-    """Compare KG schemas (Editor+ only)"""
+    """Compare KG schemas (Admin only)"""
     try:
         service = KgSchemaService(db)
         request = KgSchemaDiffRequest(against=against)
@@ -237,7 +237,7 @@ async def migrate_kg_schema(
     db: Annotated[Session, Depends(get_db)],
     dry_run: bool = Query(True, description="Whether to perform a dry run")
 ):
-    """Create migration job for KG schema (Admin or Editor+ with run_jobs permission)"""
+    """Create migration job for KG schema (Admin with run_jobs permission)"""
     try:
         service = KgSchemaService(db)
         request = KgSchemaMigrateRequest(dry_run=dry_run)
@@ -255,7 +255,7 @@ async def clone_kg_schema(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Clone KG schema to new version (Editor+ only)"""
+    """Clone KG schema to new version (Admin only)"""
     try:
         service = KgSchemaService(db)
         return await service.clone_schema(current_user.id, schema_id, request)

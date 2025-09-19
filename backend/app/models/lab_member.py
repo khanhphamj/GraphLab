@@ -18,7 +18,7 @@ class LabMember(Base):
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    role: Mapped[str] = mapped_column(Enum('owner', 'admin', 'editor', 'viewer', name='lab_member_role'), nullable=False)
+    role: Mapped[str] = mapped_column(Enum('owner', 'admin', 'viewer', name='lab_member_role'), nullable=False)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
     left_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     

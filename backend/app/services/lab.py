@@ -31,6 +31,7 @@ class LabService:
             settings=request.settings,
             owner_id=user_id
         )
+        
         self.db.add(lab)
         self.db.commit()
         self.db.refresh(lab)

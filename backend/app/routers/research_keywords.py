@@ -27,7 +27,7 @@ async def create_keyword(
     db: Annotated[Session, Depends(get_db)],
     upsert: bool = Query(False, description="If true, update existing keyword instead of failing")
 ):
-    """Create a new research keyword (Editor+ required)"""
+    """Create a new research keyword (Admin required)"""
     service = ResearchKeywordService(db)
     keyword, is_created = await service.create_keyword(
         current_user.id, session_id, request, upsert
@@ -49,7 +49,7 @@ async def bulk_create_keywords(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Bulk create/update keywords (Editor+ required)"""
+    """Bulk create/update keywords (Admin required)"""
     service = ResearchKeywordService(db)
     return await service.bulk_create_keywords(current_user.id, session_id, request)
 
@@ -92,7 +92,7 @@ async def bulk_delete_keywords(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Bulk delete keywords (Editor+ required)"""
+    """Bulk delete keywords (Admin required)"""
     service = ResearchKeywordService(db)
     return await service.bulk_delete_keywords(current_user.id, session_id, request)
 
@@ -116,7 +116,7 @@ async def update_keyword(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Update keyword (Editor+ required)"""
+    """Update keyword (Admin required)"""
     service = ResearchKeywordService(db)
     return await service.update_keyword(current_user.id, keyword_id, request)
 
@@ -127,6 +127,6 @@ async def delete_keyword(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Delete keyword (Editor+ required)"""
+    """Delete keyword (Admin required)"""
     service = ResearchKeywordService(db)
     await service.delete_keyword(current_user.id, keyword_id)

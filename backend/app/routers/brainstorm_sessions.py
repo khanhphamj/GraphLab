@@ -23,7 +23,7 @@ async def create_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Create a new brainstorm session (Editor+ required)"""
+    """Create a new brainstorm session (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.create_session(current_user.id, lab_id, request)
 
@@ -68,7 +68,7 @@ async def update_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Update session (Editor+ required)"""
+    """Update session (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.update_session(current_user.id, session_id, request)
 
@@ -79,7 +79,7 @@ async def delete_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Soft delete session (Editor+ required)"""
+    """Soft delete session (Admin required)"""
     service = BrainstormSessionService(db)
     await service.delete_session(current_user.id, session_id)
 
@@ -91,7 +91,7 @@ async def finalize_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Finalize/lock session (Editor+ required)"""
+    """Finalize/lock session (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.finalize_session(current_user.id, session_id)
 
@@ -102,7 +102,7 @@ async def archive_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Archive session (Editor+ required)"""
+    """Archive session (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.archive_session(current_user.id, session_id)
 
@@ -113,7 +113,7 @@ async def unarchive_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Unarchive session (Editor+ required)"""
+    """Unarchive session (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.unarchive_session(current_user.id, session_id)
 
@@ -124,7 +124,7 @@ async def clone_session(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Clone session with keywords (Editor+ required)"""
+    """Clone session with keywords (Admin required)"""
     service = BrainstormSessionService(db)
     return await service.clone_session(current_user.id, session_id)
 
@@ -136,6 +136,6 @@ async def kickoff_crawl(
     current_user: Annotated[User, Depends(get_current_active_user)],
     db: Annotated[Session, Depends(get_db)]
 ):
-    """Start crawling job from session keywords (Editor+ with can_run_jobs required)"""
+    """Start crawling job from session keywords (Admin with can_run_jobs required)"""
     service = BrainstormSessionService(db)
     return await service.kickoff_crawl(current_user.id, session_id, request)

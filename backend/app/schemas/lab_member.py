@@ -6,7 +6,7 @@ import uuid
 
 class LabMemberCreate(BaseModel):
     user_id: uuid.UUID
-    role: str = Field(default="viewer", pattern="^(admin|editor|viewer)$")
+    role: str = Field(default="viewer", pattern="^(admin|viewer)$")
     can_manage_members: bool = Field(default=False)
     can_edit_schema: bool = Field(default=False)
     can_run_jobs: bool = Field(default=False)
@@ -14,7 +14,7 @@ class LabMemberCreate(BaseModel):
 
 
 class LabMemberUpdate(BaseModel):
-    role: Optional[str] = Field(None, pattern="^(admin|editor|viewer)$")
+    role: Optional[str] = Field(None, pattern="^(admin|viewer)$")
     can_manage_members: Optional[bool] = None
     can_edit_schema: Optional[bool] = None
     can_run_jobs: Optional[bool] = None

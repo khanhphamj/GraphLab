@@ -48,7 +48,7 @@ The database uses PostgreSQL with SQLAlchemy ORM and includes 20 main tables org
 | `id` | UUID | Primary Key | Membership identifier |
 | `lab_id` | UUID | Foreign Key (labs), Not Null | Reference to lab |
 | `user_id` | UUID | Foreign Key (users), Not Null | Reference to user |
-| `role` | Enum | Not Null | Member role: owner, admin, editor, viewer |
+| `role` | Enum | Not Null | Member role: owner, admin, viewer |
 | `joined_at` | DateTime | Not Null, Default UTC | Membership start time |
 | `left_at` | DateTime(timezone=True) | Optional | Membership end time |
 
