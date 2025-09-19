@@ -61,8 +61,9 @@ async def list_session_keywords(
     db: Annotated[Session, Depends(get_db)],
     source: Optional[str] = Query(None, pattern="^(user|ai|imported)$", description="Filter by source"),
     is_primary: Optional[bool] = Query(None, description="Filter by primary keyword status"),
+    approved_by_user: Optional[bool] = Query(None, description="Filter by user approval status"),
     q: Optional[str] = Query(None, description="Search query for term or rationale"),
-    sort: str = Query("created_at", pattern="^(created_at|term|weight|source)$", description="Sort field"),
+    sort: str = Query("created_at", pattern="^(created_at|term|weight|source|approved_by_user)$", description="Sort field"),
     order: str = Query("desc", pattern="^(asc|desc)$", description="Sort order"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(50, ge=1, le=200, description="Items per page")
@@ -70,7 +71,7 @@ async def list_session_keywords(
     """List research keywords in session (Viewer+ required)"""
     service = ResearchKeywordService(db)
     return await service.list_session_keywords(
-        current_user.id, session_id, source, is_primary, q, sort, order, page, limit
+        current_user.id, session_id, source, is_primary, approved_by_user, q, sort, order, page, limit
     )
 
 
@@ -119,6 +120,18 @@ async def update_keyword(
     """Update keyword (Editor+ required)"""
     service = ResearchKeywordService(db)
     return await service.update_keyword(current_user.id, keyword_id, request)
+
+
+@router.patch("/brainstorm-sessions/{session_id}/keywords/{keyword_id}:approve", response_model=ResearchKeywordResponse)
+async def approve_keyword(
+    session_id: uuid.UUID,
+    keyword_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    """Mark keyword as user approved (Editor+ required)"""
+    service = ResearchKeywordService(db)
+    return await service.approve_keyword(current_user.id, session_id, keyword_id)
 
 
 @router.delete("/research-keywords/{keyword_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -20,6 +20,7 @@ class ResearchKeyword(Base):
     source: Mapped[str] = mapped_column(Enum('user', 'ai', 'imported', name='research_keyword_source'), nullable=False)
     rationale: Mapped[Optional[str]] = mapped_column(Text)
     is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    approved_by_user: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
     
     # relationships

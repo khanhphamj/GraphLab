@@ -10,6 +10,10 @@ class ResearchKeywordCreate(BaseModel):
     source: str = Field(default="user", pattern="^(user|ai|imported)$", description="Source of the keyword")
     rationale: Optional[str] = Field(None, max_length=1000, description="Rationale for including this keyword")
     is_primary: bool = Field(default=False, description="Whether this is a primary keyword")
+    approved_by_user: Optional[bool] = Field(
+        default=None,
+        description="Whether this keyword has been explicitly approved by a user"
+    )
 
     @validator('term')
     def normalize_term(cls, v):
@@ -23,6 +27,7 @@ class ResearchKeywordUpdate(BaseModel):
     source: Optional[str] = Field(None, pattern="^(user|ai|imported)$")
     rationale: Optional[str] = Field(None, max_length=1000)
     is_primary: Optional[bool] = None
+    approved_by_user: Optional[bool] = None
 
     @validator('term')
     def normalize_term(cls, v):
@@ -38,6 +43,7 @@ class ResearchKeywordResponse(BaseModel):
     source: str
     rationale: Optional[str]
     is_primary: bool
+    approved_by_user: bool
     created_at: datetime
 
     class Config:
@@ -59,6 +65,10 @@ class BulkKeywordItem(BaseModel):
     source: str = Field(default="user", pattern="^(user|ai|imported)$")
     rationale: Optional[str] = Field(None, max_length=1000)
     is_primary: bool = Field(default=False)
+    approved_by_user: Optional[bool] = Field(
+        default=None,
+        description="Whether this keyword has been explicitly approved by a user"
+    )
 
     @validator('term')
     def normalize_term(cls, v):
@@ -95,5 +105,7 @@ class SessionKeywordStats(BaseModel):
     total_keywords: int
     primary_keywords: int
     by_source: KeywordSourceStats
+    approved_keywords: int
+    pending_keywords: int
     avg_weight: Optional[float] = None
     weight_distribution: Dict[str, int] = Field(default_factory=dict)  # e.g., {"0.0-0.2": 5, "0.2-0.4": 10}
