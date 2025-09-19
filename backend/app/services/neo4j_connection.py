@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, desc, asc
 import uuid
 
-from app.models import Lab, LabMember, User, KgSchema, Neo4jConnection, ProcessingJob
+from neo4j.exceptions import AuthError, ServiceUnavailable, Neo4jError
+
+from app.models import Lab, LabMember, KgSchema, Neo4jConnection, ProcessingJob
 from app.schemas.neo4j_connection import (
     Neo4jConnectionCreate, Neo4jConnectionUpdate, Neo4jConnectionResponse, Neo4jConnectionListResponse,
     Neo4jConnectionTestRequest, Neo4jConnectionTestResponse,
@@ -13,6 +15,7 @@ from app.schemas.neo4j_connection import (
     Neo4jConnectionRotateSecretRequest, Neo4jConnectionRotateSecretResponse
 )
 from app.utils.exceptions import NotFoundError, ConflictError, AuthorizationError, ValidationError
+from app.utils.neo4j_client import build_client
 from app.utils.permissions import LabPermissions
 
 
@@ -53,6 +56,15 @@ class Neo4jConnectionService:
             if not active_schema:
                 raise ValidationError("No schema specified and no active schema found")
             schema_id = active_schema.id
+
+        # Verify that the Neo4j instance is reachable with provided credentials
+        self._verify_neo4j_connection(
+            uri=request.uri,
+            username=request.username,
+            secret_id=request.secret_id,
+            database=request.database_name,
+            action="creating the connection",
+        )
 
         # Create connection
         connection = Neo4jConnection(
@@ -179,6 +191,25 @@ class Neo4jConnectionService:
             if not schema:
                 raise NotFoundError("Schema not found or doesn't belong to this lab")
 
+        new_uri = request.uri if request.uri is not None else connection.uri
+        new_database = request.database_name if request.database_name is not None else connection.database_name
+        new_username = request.username if request.username is not None else connection.username
+        new_secret_id = request.secret_id if request.secret_id is not None else connection.secret_id
+
+        if any([
+            request.uri is not None,
+            request.database_name is not None,
+            request.username is not None,
+            request.secret_id is not None,
+        ]):
+            self._verify_neo4j_connection(
+                uri=new_uri,
+                username=new_username,
+                secret_id=new_secret_id,
+                database=new_database,
+                action="updating the connection",
+            )
+
         # Update fields
         if request.connection_name is not None:
             connection.connection_name = request.connection_name
@@ -297,22 +328,33 @@ class Neo4jConnectionService:
         if not LabPermissions.is_admin_role(user_role):
             raise AuthorizationError("Only lab admins can test connections")
 
-        # TODO: Implement actual Neo4j connection testing
-        # This would involve:
-        # 1. Retrieving secret from secure storage using secret_id
-        # 2. Creating Neo4j driver connection
-        # 3. Testing read/write/procedure permissions
-        # 4. Measuring latency
-        
-        # Mock implementation for now
-        return Neo4jConnectionTestResponse(
-            success=True,
-            connection_status="connected",
-            read_test={"status": "passed", "latency_ms": 25.5} if request.test_read else None,
-            write_test={"status": "passed", "latency_ms": 45.2} if request.test_write else None,
-            procedure_test={"status": "passed", "procedures_found": 15} if request.test_procedures else None,
-            latency_ms=35.0
-        )
+        try:
+            with self._build_client_from_connection(connection) as client:
+                latency = client.verify()
+                read_test = client.test_read() if request.test_read else None
+                write_test = client.test_write() if request.test_write else None
+                procedure_test = client.list_procedures() if request.test_procedures else None
+
+            return Neo4jConnectionTestResponse(
+                success=True,
+                connection_status="connected",
+                read_test=read_test,
+                write_test=write_test,
+                procedure_test=procedure_test,
+                latency_ms=latency
+            )
+        except (AuthError, ServiceUnavailable) as exc:
+            return Neo4jConnectionTestResponse(
+                success=False,
+                connection_status="unreachable",
+                error_details=str(exc)
+            )
+        except Neo4jError as exc:
+            return Neo4jConnectionTestResponse(
+                success=False,
+                connection_status="error",
+                error_details=str(exc)
+            )
 
     async def get_connection_health(
         self,
@@ -328,18 +370,47 @@ class Neo4jConnectionService:
         if not await self._user_has_lab_access(user_id, connection.lab_id):
             raise AuthorizationError("Access denied")
 
-        # TODO: Implement actual health checking
-        # This would involve periodic health checks stored in database or cache
-        
-        # Mock implementation for now
-        return Neo4jConnectionHealthResponse(
-            status="healthy",
-            last_check=datetime.now(timezone.utc),
-            latency_ms=28.5,
-            neo4j_version="5.12.0",
-            database_status="online",
-            recent_errors=[]
-        )
+        checked_at = datetime.now(timezone.utc)
+
+        try:
+            with self._build_client_from_connection(connection) as client:
+                health = client.gather_health()
+
+            return Neo4jConnectionHealthResponse(
+                status="healthy",
+                last_check=checked_at,
+                latency_ms=health.get("latency_ms"),
+                neo4j_version=health.get("neo4j_version"),
+                database_status=health.get("database_status"),
+                recent_errors=[]
+            )
+        except AuthError as exc:
+            return Neo4jConnectionHealthResponse(
+                status="unhealthy",
+                last_check=checked_at,
+                latency_ms=None,
+                neo4j_version=None,
+                database_status=None,
+                recent_errors=[f"Authentication failed: {exc}"]
+            )
+        except ServiceUnavailable as exc:
+            return Neo4jConnectionHealthResponse(
+                status="unhealthy",
+                last_check=checked_at,
+                latency_ms=None,
+                neo4j_version=None,
+                database_status=None,
+                recent_errors=[f"Service unavailable: {exc}"]
+            )
+        except Neo4jError as exc:
+            return Neo4jConnectionHealthResponse(
+                status="degraded",
+                last_check=checked_at,
+                latency_ms=None,
+                neo4j_version=None,
+                database_status=None,
+                recent_errors=[str(exc)]
+            )
 
     async def sync_connection(
         self,
@@ -444,21 +515,22 @@ class Neo4jConnectionService:
         if not LabPermissions.is_admin_role(user_role):
             raise AuthorizationError("Only lab admins can rotate connection secrets")
 
-        # TODO: Implement actual secret rotation
-        # This would involve:
-        # 1. Testing new credentials if requested
-        # 2. Updating secret in secure storage
-        # 3. Updating connection record
-        # 4. Testing connection with new credentials
-        
-        # Mock implementation for now
         test_results = None
         if request.test_before_rotation:
-            test_results = {
-                "connection_test": "passed",
-                "auth_test": "passed",
-                "latency_ms": 32.1
-            }
+            try:
+                with build_client(
+                    connection.uri,
+                    connection.username,
+                    request.new_secret_id,
+                    connection.database_name,
+                ) as client:
+                    latency = client.verify()
+                test_results = {
+                    "connection_test": "passed",
+                    "latency_ms": latency,
+                }
+            except (AuthError, ServiceUnavailable, Neo4jError) as exc:
+                self._handle_neo4j_exception(exc, connection.uri, "validating new secret")
 
         # Update connection with new secret
         connection.secret_id = request.new_secret_id
@@ -489,6 +561,38 @@ class Neo4jConnectionService:
             return None
 
         return Neo4jConnectionResponse.from_orm(connection)
+
+    def _build_client_from_connection(self, connection: Neo4jConnection):
+        return build_client(
+            connection.uri,
+            connection.username,
+            connection.secret_id,
+            connection.database_name,
+        )
+
+    def _verify_neo4j_connection(
+        self,
+        *,
+        uri: str,
+        username: str,
+        secret_id: str,
+        database: str,
+        action: str,
+    ) -> None:
+        try:
+            with build_client(uri, username, secret_id, database) as client:
+                client.verify()
+        except (AuthError, ServiceUnavailable, Neo4jError) as exc:
+            self._handle_neo4j_exception(exc, uri, action)
+
+    def _handle_neo4j_exception(self, exc: Exception, uri: str, action: str) -> None:
+        if isinstance(exc, AuthError):
+            raise ValidationError(f"Neo4j authentication failed while {action}: {exc}") from exc
+        if isinstance(exc, ServiceUnavailable):
+            raise ValidationError(f"Unable to reach Neo4j at {uri} while {action}: {exc}") from exc
+        if isinstance(exc, Neo4jError):
+            raise ValidationError(f"Neo4j error while {action}: {exc}") from exc
+        raise exc
 
     # Private helper methods
     async def _get_lab_or_raise(self, lab_id: uuid.UUID) -> Lab:
