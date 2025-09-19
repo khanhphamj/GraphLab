@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 import uuid
@@ -16,6 +16,19 @@ class BrainstormSessionUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = Field(None, pattern="^(active|completed|archived)$")
     session_data: Optional[Dict[str, Any]] = None
+
+
+class ConversationTurn(BaseModel):
+    speaker: str = Field(..., min_length=1, description="Identifier of the speaker (e.g., 'user' or 'agent')")
+    content: str = Field(..., min_length=1, description="Content of the conversation turn")
+    timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp when the turn was created",
+    )
+
+
+class ConversationUpdate(ConversationTurn):
+    """Payload used to append a new conversation turn to a session."""
 
 
 class KeywordStats(BaseModel):
