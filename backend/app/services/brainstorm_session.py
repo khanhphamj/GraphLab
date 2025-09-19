@@ -7,8 +7,14 @@ import math
 
 from app.models import BrainstormSession, Lab, User, ResearchKeyword, LabMember
 from app.schemas.brainstorm_session import (
-    BrainstormSessionCreate, BrainstormSessionUpdate, BrainstormSessionResponse, 
-    BrainstormSessionListResponse, KeywordStats, CrawlRequest
+    BrainstormSessionCreate,
+    BrainstormSessionUpdate,
+    BrainstormSessionResponse,
+    BrainstormSessionListResponse,
+    KeywordStats,
+    CrawlRequest,
+    ConversationTurn,
+    ConversationUpdate,
 )
 from app.utils.exceptions import NotFoundError, AuthorizationError, ValidationError
 from app.utils.permissions import LabPermissions
@@ -141,6 +147,40 @@ class BrainstormSessionService:
         if request.session_data is not None:
             session.session_data = request.session_data
 
+        session.updated_at = datetime.now(timezone.utc)
+
+        self.db.commit()
+        self.db.refresh(session)
+
+        return await self._session_to_response(session)
+
+    async def append_conversation_turn(
+        self,
+        current_user_id: uuid.UUID,
+        session_id: uuid.UUID,
+        request: ConversationUpdate
+    ) -> BrainstormSessionResponse:
+        """Append a conversation turn to the session."""
+        session = await self._get_session_with_permissions(
+            current_user_id, session_id, "participate_conversations"
+        )
+
+        session_data: Dict[str, Any] = dict(session.session_data or {})
+        existing_conversation = session_data.get("conversation")
+
+        if isinstance(existing_conversation, list):
+            conversation_history = list(existing_conversation)
+        else:
+            conversation_history = []
+
+        turn = ConversationTurn(**request.dict())
+        turn_payload = turn.dict()
+        turn_payload["timestamp"] = turn_payload["timestamp"].isoformat()
+
+        conversation_history.append(turn_payload)
+        session_data["conversation"] = conversation_history
+
+        session.session_data = session_data
         session.updated_at = datetime.now(timezone.utc)
 
         self.db.commit()

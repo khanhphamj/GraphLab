@@ -8,8 +8,13 @@ from app.dependencies import get_current_active_user
 from app.models import User
 from app.services.brainstorm_session import BrainstormSessionService
 from app.schemas.brainstorm_session import (
-    BrainstormSessionCreate, BrainstormSessionUpdate, BrainstormSessionResponse,
-    BrainstormSessionListResponse, CrawlRequest, BrainstormSessionActionRequest
+    BrainstormSessionCreate,
+    BrainstormSessionUpdate,
+    BrainstormSessionResponse,
+    BrainstormSessionListResponse,
+    CrawlRequest,
+    BrainstormSessionActionRequest,
+    ConversationUpdate,
 )
 
 router = APIRouter(prefix="/v1", tags=["Brainstorm Sessions"])
@@ -71,6 +76,18 @@ async def update_session(
     """Update session (Editor+ required)"""
     service = BrainstormSessionService(db)
     return await service.update_session(current_user.id, session_id, request)
+
+
+@router.post("/brainstorm-sessions/{session_id}:append-message", response_model=BrainstormSessionResponse)
+async def append_conversation_turn(
+    session_id: uuid.UUID,
+    request: ConversationUpdate,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)]
+):
+    """Append a new conversation message to a session (Viewer+ required)."""
+    service = BrainstormSessionService(db)
+    return await service.append_conversation_turn(current_user.id, session_id, request)
 
 
 @router.delete("/brainstorm-sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
