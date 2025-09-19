@@ -51,10 +51,14 @@ class ResearchKeywordService:
                     existing.weight = request.weight
                 if request.source:
                     existing.source = request.source
+                    if request.source == "user":
+                        existing.approved_by_user = True
                 if request.rationale is not None:
                     existing.rationale = request.rationale
                 if request.is_primary is not None:
                     existing.is_primary = request.is_primary
+                if request.approved_by_user is not None:
+                    existing.approved_by_user = request.approved_by_user
 
                 self.db.commit()
                 self.db.refresh(existing)
@@ -69,7 +73,12 @@ class ResearchKeywordService:
             weight=request.weight,
             source=request.source,
             rationale=request.rationale,
-            is_primary=request.is_primary
+            is_primary=request.is_primary,
+            approved_by_user=(
+                request.approved_by_user
+                if request.approved_by_user is not None
+                else request.source == "user"
+            )
         )
 
         try:
@@ -120,10 +129,14 @@ class ResearchKeywordService:
                             existing_keyword.weight = item.weight
                         if item.source:
                             existing_keyword.source = item.source
+                            if item.source == "user":
+                                existing_keyword.approved_by_user = True
                         if item.rationale is not None:
                             existing_keyword.rationale = item.rationale
                         if item.is_primary is not None:
                             existing_keyword.is_primary = item.is_primary
+                        if item.approved_by_user is not None:
+                            existing_keyword.approved_by_user = item.approved_by_user
                         result.updated += 1
                     elif request.mode == "merge":
                         # Merge logic: keep higher weight, combine rationale
@@ -135,6 +148,8 @@ class ResearchKeywordService:
                             existing_keyword.rationale = item.rationale
                         if item.is_primary:
                             existing_keyword.is_primary = True
+                        if item.approved_by_user:
+                            existing_keyword.approved_by_user = True
                         result.updated += 1
                 else:
                     # Create new keyword
@@ -144,7 +159,12 @@ class ResearchKeywordService:
                         weight=item.weight,
                         source=item.source,
                         rationale=item.rationale,
-                        is_primary=item.is_primary
+                        is_primary=item.is_primary,
+                        approved_by_user=(
+                            item.approved_by_user
+                            if item.approved_by_user is not None
+                            else item.source == "user"
+                        )
                     )
                     self.db.add(keyword)
                     existing_terms[normalized_term] = keyword
@@ -170,6 +190,7 @@ class ResearchKeywordService:
         session_id: uuid.UUID,
         source: Optional[str] = None,
         is_primary: Optional[bool] = None,
+        approved_by_user: Optional[bool] = None,
         q: Optional[str] = None,
         sort: str = "created_at",
         order: str = "desc",
@@ -193,6 +214,9 @@ class ResearchKeywordService:
         
         if is_primary is not None:
             query = query.filter(ResearchKeyword.is_primary == is_primary)
+
+        if approved_by_user is not None:
+            query = query.filter(ResearchKeyword.approved_by_user == approved_by_user)
 
         if q:
             search_filter = or_(
@@ -277,6 +301,8 @@ class ResearchKeywordService:
             keyword.rationale = request.rationale
         if request.is_primary is not None:
             keyword.is_primary = request.is_primary
+        if request.approved_by_user is not None:
+            keyword.approved_by_user = request.approved_by_user
 
         try:
             self.db.commit()
@@ -285,6 +311,34 @@ class ResearchKeywordService:
         except IntegrityError:
             self.db.rollback()
             raise ConflictError(f"Keyword '{request.term}' already exists in this session")
+
+    async def approve_keyword(
+        self,
+        current_user_id: uuid.UUID,
+        session_id: uuid.UUID,
+        keyword_id: uuid.UUID
+    ) -> ResearchKeywordResponse:
+        """Mark a keyword as approved by a user (Editor+ required)"""
+        await self._get_session_with_permissions(
+            current_user_id, session_id, "create_brainstorm"
+        )
+
+        keyword = self.db.query(ResearchKeyword).filter(
+            and_(
+                ResearchKeyword.id == keyword_id,
+                ResearchKeyword.session_id == session_id
+            )
+        ).first()
+
+        if not keyword:
+            raise NotFoundError("Research keyword not found")
+
+        if not keyword.approved_by_user:
+            keyword.approved_by_user = True
+
+        self.db.commit()
+        self.db.refresh(keyword)
+        return await self._keyword_to_response(keyword)
 
     async def delete_keyword(
         self,
@@ -355,6 +409,8 @@ class ResearchKeywordService:
 
         total_keywords = len(keywords)
         primary_keywords = sum(1 for kw in keywords if kw.is_primary)
+        approved_keywords = sum(1 for kw in keywords if kw.approved_by_user)
+        pending_keywords = total_keywords - approved_keywords
 
         # Source statistics
         source_stats = KeywordSourceStats()
@@ -390,6 +446,8 @@ class ResearchKeywordService:
             total_keywords=total_keywords,
             primary_keywords=primary_keywords,
             by_source=source_stats,
+            approved_keywords=approved_keywords,
+            pending_keywords=pending_keywords,
             avg_weight=avg_weight,
             weight_distribution=weight_distribution
         )
@@ -475,5 +533,6 @@ class ResearchKeywordService:
             source=keyword.source,
             rationale=keyword.rationale,
             is_primary=keyword.is_primary,
+            approved_by_user=keyword.approved_by_user,
             created_at=keyword.created_at
         )
