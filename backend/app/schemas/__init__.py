@@ -4,6 +4,7 @@ from .api_key import *
 from .lab import *
 from .lab_member import *
 from .brainstorm_session import *
+from .brainstorm_generation import *
 from .research_keyword import *
 from .kg_schema import *
 from .neo4j_connection import *
@@ -58,6 +59,11 @@ __all__ = [
     "KeywordStats",
     "CrawlRequest",
     "BrainstormSessionActionRequest",
+
+    # Brainstorm generation schemas
+    "KeywordSuggestion",
+    "GeneratedKeywordResult",
+    "KeywordGenerationResponse",
     
     # Research Keyword schemas
     "ResearchKeywordCreate",

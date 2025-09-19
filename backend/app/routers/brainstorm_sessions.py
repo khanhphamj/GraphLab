@@ -7,6 +7,7 @@ from app.db.session import get_db
 from app.dependencies import get_current_active_user
 from app.models import User
 from app.services.brainstorm_session import BrainstormSessionService
+from app.services.brainstorm_generation import BrainstormGenerationService
 from app.schemas.brainstorm_session import (
     BrainstormSessionCreate,
     BrainstormSessionUpdate,
@@ -16,6 +17,7 @@ from app.schemas.brainstorm_session import (
     BrainstormSessionActionRequest,
     ConversationUpdate,
 )
+from app.schemas.brainstorm_generation import KeywordGenerationResponse
 
 router = APIRouter(prefix="/v1", tags=["Brainstorm Sessions"])
 
@@ -102,6 +104,26 @@ async def delete_session(
 
 
 # Action routes
+@router.post(
+    "/brainstorm-sessions/{session_id}:generate-keywords",
+    response_model=KeywordGenerationResponse,
+)
+async def generate_keywords(
+    session_id: uuid.UUID,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    db: Annotated[Session, Depends(get_db)],
+    limit: int = Query(
+        10,
+        ge=1,
+        le=25,
+        description="Maximum number of keyword suggestions to request from the agent",
+    ),
+):
+    """Trigger the brainstorming agent to propose keywords (Editor+ required)."""
+    service = BrainstormGenerationService(db)
+    return await service.generate_keywords(current_user.id, session_id, limit=limit)
+
+
 @router.post("/brainstorm-sessions/{session_id}:finalize", response_model=BrainstormSessionResponse)
 async def finalize_session(
     session_id: uuid.UUID,
