@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.routers import (
     auth_router, users_router, labs_router, lab_members_router,
-    brainstorm_sessions_router, research_keywords_router,
+    brainstorm_sessions_router, research_keywords_router, research_papers_router,
     kg_schemas_router, neo4j_connections_router
 )
 from app.utils.exceptions import (
@@ -62,6 +62,7 @@ app.include_router(labs_router)
 app.include_router(lab_members_router)
 app.include_router(brainstorm_sessions_router)
 app.include_router(research_keywords_router)
+app.include_router(research_papers_router)
 app.include_router(kg_schemas_router)
 app.include_router(neo4j_connections_router)
 

@@ -5,7 +5,7 @@ import uuid
 
 
 class ResearchPaperCreate(BaseModel):
-    lab_id: uuid.UUID
+    lab_id: Optional[uuid.UUID] = None
     arxiv_id: Optional[str] = None
     doi: Optional[str] = None
     title: str = Field(..., min_length=1, max_length=255)

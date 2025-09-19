@@ -4,6 +4,7 @@ from .labs import router as labs_router
 from .lab_members import router as lab_members_router
 from .brainstorm_sessions import router as brainstorm_sessions_router
 from .research_keywords import router as research_keywords_router
+from .research_papers import router as research_papers_router
 from .kg_schemas import router as kg_schemas_router
 from .neo4j_connections import router as neo4j_connections_router
 
@@ -14,6 +15,7 @@ __all__ = [
     "lab_members_router",
     "brainstorm_sessions_router",
     "research_keywords_router",
+    "research_papers_router",
     "kg_schemas_router",
     "neo4j_connections_router"
 ]
