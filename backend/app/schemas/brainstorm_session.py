@@ -64,3 +64,11 @@ class CrawlRequest(BrainstormSessionActionRequest):
     primary_only: bool = Field(default=False, description="Use only primary keywords")
     max_results: int = Field(default=100, ge=1, le=1000, description="Maximum results per keyword")
     date_range: Optional[Dict[str, str]] = Field(None, description="Date range filter")
+
+
+class CrawlResponse(BaseModel):
+    message: str
+    job_id: uuid.UUID
+    session_id: uuid.UUID
+    keywords_count: int
+    config: Dict[str, Any]

@@ -5,7 +5,7 @@ from sqlalchemy import and_, or_, func, desc, asc
 import uuid
 import math
 
-from app.models import BrainstormSession, Lab, User, ResearchKeyword, LabMember
+from app.models import BrainstormSession, Lab, User, ResearchKeyword, LabMember, ProcessingJob
 from app.schemas.brainstorm_session import (
     BrainstormSessionCreate, BrainstormSessionUpdate, BrainstormSessionResponse, 
     BrainstormSessionListResponse, KeywordStats, CrawlRequest
@@ -297,9 +297,33 @@ class BrainstormSessionService:
 
         # TODO: Create processing job here
         # This would integrate with your job processing system
+        job = ProcessingJob(
+            lab_id=session.lab_id,
+            job_type="paper_crawl",
+            status="queued",
+            priority=request.priority if hasattr(request, "priority") else 0,
+            input_config={
+                "session_id": str(session_id),
+                "keywords": [{
+                    "term": keyword.term,
+                    "weight": float(keyword.weight) if keyword.weight else None
+                } for keyword in keywords],
+                "providers": request.providers,
+                "categories": request.categories,
+                "primary_only": request.primary_only,
+                "max_results": request.max_results,
+                "date_range": request.date_range
+            },
+            total_items=request.max_results
+        )
+
+        self.db.add(job)
+        self.db.commit()
+        self.db.refresh(job)
         
         return {
             "message": "Crawl job created successfully",
+            "job_id": job.id,
             "session_id": session_id,
             "keywords_count": len(keywords),
             "config": {

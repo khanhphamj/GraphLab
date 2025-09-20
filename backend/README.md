@@ -131,7 +131,7 @@ psql "${DATABASE_URL}"    # or use psql -h localhost -U postgres -d graphlap
 Neo4j quick test (python):
 ```python
 from neo4j import GraphDatabase
-driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "<password-from-NEO4J_AUTH>"))
+driver = GraphDatabase.driver("bolt://localhost:7687", auth=("neo4j", "password-from-NEO4J_AUTH"))
 with driver.session() as s:
     print(s.run("RETURN 1").single())
 ```

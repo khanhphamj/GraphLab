@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import String, ForeignKey, DateTime, JSON, Enum, Index
+from sqlalchemy import String, ForeignKey, DateTime, JSON, Enum, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -20,8 +20,8 @@ class Conversation(Base):
     conversation_type: Mapped[str] = mapped_column(Enum('research_chat', 'schema_design', 'data_exploration', name='conversation_type'), nullable=False)
     active_filters: Mapped[Optional[dict]] = mapped_column(JSON)
     query_history: Mapped[Optional[dict]] = mapped_column(JSON)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc, onupdate=timezone.utc)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     
     # relationships

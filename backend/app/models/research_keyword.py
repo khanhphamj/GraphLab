@@ -20,7 +20,7 @@ class ResearchKeyword(Base):
     source: Mapped[str] = mapped_column(Enum('user', 'ai', 'imported', name='research_keyword_source'), nullable=False)
     rationale: Mapped[Optional[str]] = mapped_column(Text)
     is_primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     
     # relationships
     session: Mapped["BrainstormSession"] = relationship("BrainstormSession", back_populates="research_keywords")

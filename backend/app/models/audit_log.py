@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, INET
-from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Enum, Index
+from sqlalchemy import String, Text, ForeignKey, DateTime, JSON, Enum, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -22,7 +22,7 @@ class AuditLog(Base):
     ip_address: Mapped[Optional[str]] = mapped_column(INET)
     user_agent: Mapped[Optional[str]] = mapped_column(Text)
     json_metadata: Mapped[Optional[dict]] = mapped_column(JSON)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     
     # relationships
     user: Mapped[Optional["User"]] = relationship("User", back_populates="audit_logs")

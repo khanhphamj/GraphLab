@@ -9,7 +9,7 @@ from app.models import User
 from app.services.brainstorm_session import BrainstormSessionService
 from app.schemas.brainstorm_session import (
     BrainstormSessionCreate, BrainstormSessionUpdate, BrainstormSessionResponse,
-    BrainstormSessionListResponse, CrawlRequest, BrainstormSessionActionRequest
+    BrainstormSessionListResponse, CrawlRequest, BrainstormSessionActionRequest, CrawlResponse
 )
 
 router = APIRouter(prefix="/v1", tags=["Brainstorm Sessions"])
@@ -129,7 +129,7 @@ async def clone_session(
     return await service.clone_session(current_user.id, session_id)
 
 
-@router.post("/brainstorm-sessions/{session_id}:crawl")
+@router.post("/brainstorm-sessions/{session_id}:crawl", response_model=CrawlResponse)
 async def kickoff_crawl(
     session_id: uuid.UUID,
     request: CrawlRequest,

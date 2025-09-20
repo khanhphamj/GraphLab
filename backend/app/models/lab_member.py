@@ -2,7 +2,7 @@ import uuid
 from typing import Optional
 from datetime import datetime, timezone
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy import ForeignKey, DateTime, Enum, UniqueConstraint, Index
+from sqlalchemy import ForeignKey, DateTime, Enum, UniqueConstraint, Index, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
@@ -14,12 +14,12 @@ class LabMember(Base):
         Index("ix_lab_members_lab_id", "lab_id"),
         Index("ix_lab_members_user_id", "user_id"),
     )
-    
+
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lab_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("labs.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     role: Mapped[str] = mapped_column(Enum('owner', 'admin', 'viewer', name='lab_member_role'), nullable=False)
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=timezone.utc)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     left_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     
     # relationships
